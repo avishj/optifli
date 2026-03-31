@@ -13,6 +13,8 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.text import Text
 
+from optifli.exit_codes import ExitCode
+
 
 class LogFormat(StrEnum):
     """Supported log output formats."""
@@ -51,4 +53,4 @@ except ValidationError as exc:
             expand=False,
         ),
     )
-    sys.exit(78)
+    sys.exit(ExitCode.CONFIG)
