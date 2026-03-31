@@ -125,7 +125,7 @@ This is the kind of itinerary Optifli is designed for:
 3. Every recommendation includes transparent component scores and final weighted score.
 4. Return both top full-trip plans and leg-level swap opportunities.
 5. Let users configure top-N counts for full-trip and leg-level outputs.
-6. Every leg alternative includes swap impact summary: fare delta, duration delta, stop delta, and bundle-compatibility impact.
+6. Every leg alternative includes swap impact summary: fare delta, duration delta, stop delta, and bundle-compatibility impact, with explicit warning when reduced bundle compatibility may increase total trip price.
 
 ### 8) Execution Modes and Output
 1. Full automatic mode: optimize the whole trip at once.
@@ -133,6 +133,7 @@ This is the kind of itinerary Optifli is designed for:
 3. CLI output includes grouped direction views (forward/reverse when requested), ranked full-trip plans, leg-level alternatives, constraints used, search policy trace, and status classification for partial/failed lookups.
 4. Save machine-readable artifacts in JSON with a common envelope (`runId`, `timestamp`, `schemaVersion`) for reproducibility and replay.
 5. For each option, output shows whether it is standalone one-way or tied to a multi-city/round-trip bundle.
+6. If a swap breaks or weakens bundle compatibility, output must warn that total trip price can increase versus bundled pricing.
 
 ### 9) Reliability and Runtime Behavior
 1. Classify unresolved lookups as no-inventory, rate-limited, or unknown.
