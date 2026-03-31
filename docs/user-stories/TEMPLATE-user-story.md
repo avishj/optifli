@@ -1,0 +1,21 @@
+# US-XXX: Title
+
+## Type
+User-facing
+
+## Story
+As a <user>, I want <capability> so that <benefit>.
+
+## Business Value
+Short product-value statement.
+
+## Acceptance Criteria
+1. User-visible behavior criterion.
+2. User-visible behavior criterion.
+3. Link to engineering spec when low-level contract detail is needed.
+
+## Dependencies
+1. Upstream story or spec.
+
+## Linked Engineering Specs (Optional)
+1. docs/engineering-specs/ES-XXX-example.md
