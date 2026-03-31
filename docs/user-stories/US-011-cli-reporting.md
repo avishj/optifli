@@ -10,7 +10,7 @@ Readable outputs improve decision speed and reduce confusion.
 1. Report output includes ranked global plans, leg-level alternatives, constraint summary sections, grouped direction views (forward/reverse when requested), search policy traces, and construction type indicators (standalone one-way vs multi-city/round-trip bundle).
 2. Each global plan includes total fare, total duration, stop count, and ranking explanation.
 3. Report displays warning banners for unknown classifications or incomplete coverage.
-4. Report formatting follows the project's standard CLI presentation style consistently across runs.
+4. Search policy trace granularity is defined: summary mode (default) shows per-leg `attemptedQueries`, `successfulQueries`, `failedQueries`, `fallbackUsed`, `expansionRounds`, and `finalStatus`; verbose mode adds per-query window boundaries and timestamps.
 5. Snapshot tests cover at least 20 report scenarios for stable rendering.
 
 ## Dependencies

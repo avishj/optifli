@@ -9,9 +9,9 @@ Correct policy handling prevents invalid recommendations and missed opportunitie
 ## Acceptance Criteria
 1. Each leg search scans the full departure window provided by the user, including cross-day windows.
 2. Optional arrival cutoff constraints are applied only when configured, and behavior is covered by cutoff policy tests.
-3. Non-stop is attempted first, and one-stop fallback runs only if non-stop returns zero results and fallback is enabled.
-4. If base window has zero results, expansion runs in configurable +/-1 or +/-2 hour increments until max expansion limit.
-5. Search logs include policy trace fields (base window hit, fallback used, expansion count), and these are present in integration test outputs.
+3. Search order is explicit: run non-stop search on the base window first; if zero results and expansion is enabled, expand symmetrically (+/-1h or +/-2h per round) and re-run non-stop until expansion limits are reached; run one-stop fallback only if non-stop still returns zero and fallback is enabled.
+4. If one-stop fallback also returns zero, the run returns an empty result set with final status `NO_RESULTS_AFTER_FALLBACK`; one-stop expansion is attempted only when `expandOnFallback=true`.
+5. Search logs include structured policy trace fields with stable semantics: `baseWindowHit` (boolean), `fallbackUsed` (boolean), `expansionRounds` (integer), `finalStatus` (enum), `fallbackExhausted` (boolean), and `windowStart/windowEnd` (ISO-8601 timestamps).
 
 ## Dependencies
 1. FLI adapter and leg query builder.
