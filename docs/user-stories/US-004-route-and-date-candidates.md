@@ -1,5 +1,8 @@
 # US-004: Generate Route and Date Candidates
 
+## Type
+Engine behavior
+
 ## Story
 As an optimizer, I want to generate valid route and schedule candidates so that search can compare realistic options.
 

@@ -1,5 +1,8 @@
 # US-012: Performance, Rate-Limit-Aware Execution, and Run Artifacts
 
+## Type
+Operational spec
+
 ## Story
 As a maintainer, I want runs to stay useful even under API limits so optimization remains observable, debuggable, and actionable.
 

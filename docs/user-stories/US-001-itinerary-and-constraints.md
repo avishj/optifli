@@ -1,5 +1,8 @@
 # US-001: Capture Itinerary and Constraints
 
+## Type
+User-facing
+
 ## Story
 As a vacation planner, I want to provide my city sequence, stay durations, and date/time constraints so that Optifli can generate valid optimization candidates.
 

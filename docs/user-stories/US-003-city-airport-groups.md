@@ -1,5 +1,8 @@
 # US-003: Manage City Airport Groups
 
+## Type
+User-facing
+
 ## Story
 As a traveler, I want to define which airports belong to each city in my itinerary so search remains relevant and avoids unsuitable airports.
 

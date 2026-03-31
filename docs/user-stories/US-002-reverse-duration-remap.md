@@ -1,5 +1,8 @@
 # US-002: Reverse Direction with Duration Remap
 
+## Type
+User-facing
+
 ## Story
 As a traveler comparing forward vs reverse journeys, I want stay durations to stay attached to destination cities so reverse plans remain realistic.
 

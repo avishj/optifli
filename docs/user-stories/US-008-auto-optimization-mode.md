@@ -1,5 +1,8 @@
 # US-008: Full-Trip Automatic Optimization Mode
 
+## Type
+User-facing
+
 ## Story
 As a traveler who wants speed, I want a one-command full optimization run so I can get best recommendations without manual leg decisions.
 

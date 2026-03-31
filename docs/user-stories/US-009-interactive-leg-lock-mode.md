@@ -1,5 +1,8 @@
 # US-009: Interactive Leg-by-Leg Lock Mode
 
+## Type
+User-facing
+
 ## Story
 As a hands-on traveler, I want to lock one leg at a time so I can guide optimization while preserving downstream feasibility.
 

@@ -1,5 +1,8 @@
 # US-006: Build Ticket Construction Candidates
 
+## Type
+Engine behavior
+
 ## Story
 As a budget traveler, I want Optifli to compare one-way, multi-city, and round-trip constructions so I can book the cheapest feasible combination.
 

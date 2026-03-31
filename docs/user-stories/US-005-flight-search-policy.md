@@ -1,5 +1,8 @@
 # US-005: Execute Flight Search Policy
 
+## Type
+Engine behavior
+
 ## Story
 As a traveler, I want search to honor my time windows and stop preferences so the options are both cheap and practical.
 

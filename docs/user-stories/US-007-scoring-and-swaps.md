@@ -1,5 +1,8 @@
 # US-007: Score, Rank, and Surface Leg Swaps
 
+## Type
+Engine behavior
+
 ## Story
 As a decision-maker, I want transparent ranking and swap suggestions so I can trade off price, duration, and convenience intelligently.
 

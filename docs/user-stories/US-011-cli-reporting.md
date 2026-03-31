@@ -1,5 +1,8 @@
 # US-011: CLI Reporting and Explainability
 
+## Type
+User-facing
+
 ## Story
 As a traveler, I want a clear CLI report with ranking rationale so I can confidently choose a booking plan.
 

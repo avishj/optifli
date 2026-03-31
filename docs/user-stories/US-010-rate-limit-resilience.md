@@ -1,5 +1,8 @@
 # US-010: Rate-Limit Resilience and Outcome Classification
 
+## Type
+Operational spec
+
 ## Story
 As an operator, I want robust retries and explicit status classification so I can distinguish inventory gaps from API constraints.
 
