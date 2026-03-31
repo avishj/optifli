@@ -1,7 +1,7 @@
 # US-XXX: Title
 
 ## Type
-User-facing
+User-facing OR Operational spec OR Engine behavior
 
 ## Story
 As a <user>, I want <capability> so that <benefit>.
