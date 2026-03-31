@@ -9,7 +9,6 @@ import pytest
 from optifli import __version__
 from optifli.exit_codes import ExitCode
 
-
 pytestmark = pytest.mark.integration
 
 
