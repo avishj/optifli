@@ -8,7 +8,6 @@ import pytest
 
 from optifli.config import Settings
 
-
 pytestmark = pytest.mark.unit
 
 

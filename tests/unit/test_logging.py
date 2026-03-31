@@ -12,7 +12,6 @@ from rich.logging import RichHandler
 from optifli.config import LogFormat
 from optifli.logging import setup_logging
 
-
 pytestmark = pytest.mark.unit
 
 

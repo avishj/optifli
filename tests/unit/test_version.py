@@ -8,7 +8,6 @@ import pytest
 
 from optifli import __version__
 
-
 pytestmark = pytest.mark.unit
 
 
