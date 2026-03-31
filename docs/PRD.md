@@ -156,16 +156,35 @@ This is the kind of itinerary Optifli is designed for:
 2. Round-trip compatibility: pair opposite-direction legs between the same city groups, apply traveler constraints, and include only when FLI returns a valid round-trip fare quote.
 3. Scoring: weighted scoring is the default mode with explicit preset weights (Cheapest 100/0/0/0, Balanced 40/30/20/10, Fastest 0/100/0/0, Fewer Stops 0/0/100/0 for Price/Duration/Stops/Convenience).
 
-## Linked User Stories
+## Linked Documentation
+
+### User-Facing Stories
 1. docs/user-stories/US-001-itinerary-and-constraints.md
 2. docs/user-stories/US-002-reverse-duration-remap.md
 3. docs/user-stories/US-003-city-airport-groups.md
-4. docs/user-stories/US-004-route-and-date-candidates.md
-5. docs/user-stories/US-005-flight-search-policy.md
-6. docs/user-stories/US-006-booking-construction.md
-7. docs/user-stories/US-007-scoring-and-swaps.md
-8. docs/user-stories/US-008-auto-optimization-mode.md
-9. docs/user-stories/US-009-interactive-leg-lock-mode.md
-10. docs/user-stories/US-010-rate-limit-resilience.md
-11. docs/user-stories/US-011-cli-reporting.md
-12. docs/user-stories/US-012-performance-and-artifacts.md
+4. docs/user-stories/US-008-auto-optimization-mode.md
+5. docs/user-stories/US-009-interactive-leg-lock-mode.md
+6. docs/user-stories/US-011-cli-reporting.md
+7. docs/user-stories/US-013-direction-choice-experience.md
+8. docs/user-stories/US-014-bundle-risk-guidance.md
+9. docs/user-stories/US-015-airport-suggestion-confirmation.md
+
+### Engine Behavior Stories
+1. docs/user-stories/US-004-route-and-date-candidates.md
+2. docs/user-stories/US-005-flight-search-policy.md
+3. docs/user-stories/US-006-booking-construction.md
+4. docs/user-stories/US-007-scoring-and-swaps.md
+
+### Operational Stories
+1. docs/user-stories/US-010-rate-limit-resilience.md
+2. docs/user-stories/US-012-performance-and-artifacts.md
+
+### Engineering Specs
+1. docs/engineering-specs/ES-001-search-policy-contract.md
+2. docs/engineering-specs/ES-002-scoring-contract.md
+3. docs/engineering-specs/ES-003-reporting-contract.md
+4. docs/engineering-specs/ES-004-rate-limit-resilience.md
+5. docs/engineering-specs/ES-005-runtime-artifacts.md
+
+### Deferred Items
+1. docs/TBD.md
