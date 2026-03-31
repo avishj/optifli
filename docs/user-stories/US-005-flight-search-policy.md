@@ -1,3 +1,9 @@
+<!--
+SPDX-FileCopyrightText: 2026 Avish Jha <avish.j@pm.me>
+
+SPDX-License-Identifier: AGPL-3.0-or-later
+-->
+
 # US-005: Execute Flight Search Policy
 
 ## Type
@@ -22,4 +28,3 @@ Correct policy handling prevents invalid recommendations and missed opportunitie
 
 ## Linked Engineering Specs
 1. docs/engineering-specs/ES-001-search-policy-contract.md
-

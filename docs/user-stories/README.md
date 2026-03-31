@@ -1,3 +1,9 @@
+<!--
+SPDX-FileCopyrightText: 2026 Avish Jha <avish.j@pm.me>
+
+SPDX-License-Identifier: AGPL-3.0-or-later
+-->
+
 # Optifli User Stories
 
 ## User-Facing Stories
@@ -41,4 +47,3 @@ Each story is defined as a modular implementation unit with clear interfaces, de
 ## Templates
 1. docs/user-stories/TEMPLATE-user-story.md
 2. docs/engineering-specs/TEMPLATE-engineering-spec.md
-

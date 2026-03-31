@@ -1,3 +1,9 @@
+<!--
+SPDX-FileCopyrightText: 2026 Avish Jha <avish.j@pm.me>
+
+SPDX-License-Identifier: AGPL-3.0-or-later
+-->
+
 # US-012: Performance, Rate-Limit-Aware Execution, and Run Artifacts
 
 ## Type
@@ -21,4 +27,3 @@ Rate-limit-aware execution and reproducibility are required for dependable rollo
 
 ## Linked Engineering Specs
 1. docs/engineering-specs/ES-005-runtime-artifacts.md
-
