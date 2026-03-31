@@ -10,12 +10,15 @@ As an operator, I want robust retries and explicit status classification so I ca
 Accurate failure classification drives user trust and better retries.
 
 ## Acceptance Criteria
-1. Transient failures trigger exponential backoff with jitter and bounded retries (`maxRetries` default 5, configurable range 0-10).
-2. Unresolved outcomes are classified as no-inventory, rate-limited, or unknown for every failed leg.
-3. Classification quality is validated on mocked resilience test fixtures.
-4. The system logs retry count, backoff timings, and final status for every failed lookup.
-5. Partial outputs are returned instead of hard-failing when at least one leg has valid candidates.
+1. Transient API issues are handled automatically without forcing users to restart runs.
+2. Failed lookups are clearly classified as inventory gaps, rate-limit issues, or unknown states.
+3. The system returns partial results whenever useful options exist, instead of hard-failing the whole run.
+4. Users can see clear retry and failure outcomes in run output.
 
 ## Dependencies
 1. FLI adapter with typed error handling.
 2. Structured logger.
+
+## Linked Engineering Specs
+1. docs/engineering-specs/ES-004-rate-limit-resilience.md
+
