@@ -20,7 +20,7 @@ This is the kind of itinerary Optifli is designed for:
 2. Route (city names): Delhi -> Hanoi -> Da Nang -> Phu Quoc -> Singapore -> Delhi.
 3. Stay durations (including half-day): HAN=2d, DAD=1.5d, PQC=3d, SIN=0.5d.
 4. Half-day interpretation: SIN=0.5d means the next leg can depart no earlier than 12 hours after arrival in SIN.
-5. Example departure window for one leg: DEL -> HAN can depart between 2026-07-16 19:00 and 2026-07-17 11:00 (local time).
+5. Example departure window for one leg: DEL -> HAN can depart between 2026-07-16 19:00 IST and 2026-07-17 11:00 IST.
 6. Reverse mode means the same city durations still apply to the same cities, even though leg order flips.
 7. The engine compares one-way, multi-city, round-trip, and mixed constructions.
 
@@ -30,12 +30,13 @@ This is the kind of itinerary Optifli is designed for:
 3. City group: the set of allowed airports for a city.
 4. Base window: the exact departure window the user requested for a leg.
 5. Expanded window: additional search range around the base window, used only when enabled and needed.
-6. Construction: how tickets are combined (one-way, multi-city, round-trip, or mixed).
-7. Global plan: one complete end-to-end candidate for the whole trip.
-8. Leg alternative: a replaceable option for a specific leg within a global plan.
-9. Leg swap: replacing one leg alternative with another within a global plan while preserving hard constraints.
-10. Coverage gap: part of the search space not fully explored due to limits (for example rate limits or request budget).
-11. Round-trip compatibility rule: the minimum conditions needed to treat two opposite-direction legs as one round-trip candidate.
+6. Fallback: backup search path used only if the primary search path returns no results.
+7. Construction: how tickets are combined (one-way, multi-city, round-trip, or mixed).
+8. Global plan: one complete end-to-end candidate for the whole trip.
+9. Leg alternative: a replaceable option for a specific leg within a global plan.
+10. Leg swap: replacing one leg alternative with another within a global plan while preserving hard constraints.
+11. Coverage gap: part of the search space not fully explored due to limits (for example rate limits or request budget).
+12. Round-trip compatibility rule: the minimum conditions needed to treat two opposite-direction legs as one round-trip candidate.
 
 ## Goals
 1. Generate valid optimization results for itineraries with an origin, up to 10 destination cities, and a final return city.
@@ -54,7 +55,7 @@ This is the kind of itinerary Optifli is designed for:
 5. User-defined city airport groups with include/exclude controls (no curated airport list).
 6. Stop policy: prefer non-stop, optionally fallback to one-stop.
 7. Departure windows with optional arrival cutoff.
-8. Optional window expansion in 1-2 hour increments when base window has no results.
+8. Optional window expansion in 1-hour rounds when base window has no results (round 2 reaches +/-2 hours).
 9. CLI-first output with machine-readable run artifacts.
 
 ### Out of Scope
@@ -95,6 +96,10 @@ This is the kind of itinerary Optifli is designed for:
 4. The CLI validates airport code format as uppercase IATA three-letter codes and rejects duplicates with clear errors.
 5. Leg searches only use airports allowed by the city group definition.
 6. The system can surface nearby airport suggestions ranked by distance, but suggested airports are never auto-added and require explicit user confirmation.
+7. Nearby-airport suggestions use a local airport dataset consumed by the CLI.
+8. Suggestion ranking uses dataset fields for latitude/longitude, IATA code, and city grouping, and must still respect city group definition and CLI validation rules.
+9. Dataset refresh is optional and user-invoked from the CLI; if not refreshed, the CLI uses the latest locally available dataset.
+10. If the dataset is unavailable, nearby-airport suggestions are disabled for that run and the CLI reports suggestions as temporarily unavailable without blocking user-provided airport input.
 
 ### 4) Route and Candidate Generation
 1. Support direction modes: forward, reverse, both.
@@ -106,9 +111,9 @@ This is the kind of itinerary Optifli is designed for:
 ### 5) Flight Search Policy
 1. Use FLI Python library as the flight data source.
 2. Attempt non-stop first by default.
-3. If non-stop returns no valid results and fallback is enabled, retry with one-stop.
+3. If non-stop returns no valid results and fallback is enabled, retry with one-stop as a backup path.
 4. Search the entire base departure window before expanding.
-5. If no results in base window and expansion is enabled, expand both window ends in 1-2 hour steps up to a configured cap.
+5. If no results in base window and expansion is enabled, expand both window ends by 1 hour per round up to a configured cap.
 6. Support optional arrival cutoff filtering when requested.
 
 ### 6) Booking Construction
