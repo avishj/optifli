@@ -4,7 +4,7 @@
 As an operator, I want robust retries and explicit status classification so I can distinguish inventory gaps from API constraints.
 
 ## Business Value
-Accurate failure classification drives user trust and better retrials.
+Accurate failure classification drives user trust and better retries.
 
 ## Acceptance Criteria
 1. Transient failures trigger exponential backoff with jitter and bounded retries.

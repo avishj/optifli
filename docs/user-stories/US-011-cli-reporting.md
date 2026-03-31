@@ -7,7 +7,7 @@ As a traveler, I want a clear CLI report with ranking rationale so I can confide
 Readable outputs improve decision speed and reduce confusion.
 
 ## Acceptance Criteria
-1. Report output includes ranked global plans, leg-level alternatives, and constraint summary sections.
+1. Report output includes ranked global plans, leg-level alternatives, constraint summary sections, grouped direction views (forward/reverse when requested), search policy traces, and construction type indicators (standalone one-way vs multi-city/round-trip bundle).
 2. Each global plan includes total fare, total duration, stop count, and ranking explanation.
 3. Report displays warning banners for unknown classifications or incomplete coverage.
 4. Report formatting follows the project's standard CLI presentation style consistently across runs.

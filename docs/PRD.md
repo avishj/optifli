@@ -37,7 +37,7 @@ This is the kind of itinerary Optifli is designed for:
 10. Round-trip compatibility rule: the minimum conditions needed to treat two opposite-direction legs as one round-trip candidate.
 
 ## Goals
-1. Generate valid optimization results for itineraries up to 10 cities.
+1. Generate valid optimization results for itineraries with an origin, up to 10 destination cities, and a final return city.
 2. Support both full automatic optimization and interactive leg-by-leg locking.
 3. Respect real trip constraints: stay durations, date/time windows, airport preferences, and stop preferences.
 4. Return explainable rankings with both full-trip recommendations and per-leg alternatives.

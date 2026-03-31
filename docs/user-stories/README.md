@@ -11,6 +11,6 @@
 9. US-009: Interactive leg lock mode.
 10. US-010: Rate-limit resilience.
 11. US-011: CLI reporting.
-12. US-012: Rate-limit-aware execution and artifacts.
+12. US-012: Performance, rate-limit-aware execution and artifacts.
 
 Each story is defined as an independent implementation unit with clear acceptance criteria.

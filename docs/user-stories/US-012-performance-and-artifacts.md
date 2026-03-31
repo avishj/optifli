@@ -1,4 +1,4 @@
-# US-012: Rate-Limit-Aware Execution and Run Artifacts
+# US-012: Performance, Rate-Limit-Aware Execution, and Run Artifacts
 
 ## Story
 As a maintainer, I want runs to stay useful even under API limits so optimization remains observable, debuggable, and actionable.
