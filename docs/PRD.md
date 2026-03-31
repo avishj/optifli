@@ -121,7 +121,7 @@ This is the kind of itinerary Optifli is designed for:
 
 ### 7) Ranking and Alternatives
 1. Default ranking uses a weighted score profile across total price, total duration, stops, and departure convenience.
-2. Preset scoring profiles are available: Cheapest, Balanced (default), Fastest, and Fewer Stops.
+2. Preset scoring profiles are available with explicit defaults: Cheapest (Price 100%, Duration 0%, Stops 0%, Convenience 0%), Balanced default (Price 40%, Duration 30%, Stops 20%, Convenience 10%), Fastest (Price 0%, Duration 100%, Stops 0%, Convenience 0%), and Fewer Stops (Price 0%, Duration 0%, Stops 100%, Convenience 0%).
 3. Every recommendation includes transparent component scores and final weighted score.
 4. Return both top full-trip plans and leg-level swap opportunities.
 5. Let users configure top-N counts for full-trip and leg-level outputs.
@@ -153,7 +153,7 @@ This is the kind of itinerary Optifli is designed for:
 ## Decision Log
 1. Airport curation: no curated airport list. Users define airport sets per city, and Optifli uses those sets.
 2. Round-trip compatibility: pair opposite-direction legs between the same city groups, apply traveler constraints, and include only when FLI returns a valid round-trip fare quote.
-3. Scoring: weighted scoring is the default mode with a small preset set (Cheapest, Balanced, Fastest, Fewer Stops).
+3. Scoring: weighted scoring is the default mode with explicit preset weights (Cheapest 100/0/0/0, Balanced 40/30/20/10, Fastest 0/100/0/0, Fewer Stops 0/0/100/0 for Price/Duration/Stops/Convenience).
 
 ## Linked User Stories
 1. docs/user-stories/US-001-itinerary-and-constraints.md
