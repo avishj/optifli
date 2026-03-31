@@ -92,8 +92,9 @@ This is the kind of itinerary Optifli is designed for:
 1. Users can define airport sets per city.
 2. Users can include or exclude airports from each city group.
 3. The system does not maintain or enforce a curated airport list; user-selected airports are the source of truth.
-4. The CLI validates airport code format and duplicate entries with clear errors.
+4. The CLI validates airport code format as uppercase IATA three-letter codes and rejects duplicates with clear errors.
 5. Leg searches only use airports allowed by the city group definition.
+6. The system can surface nearby airport suggestions ranked by distance, but suggested airports are never auto-added and require explicit user confirmation.
 
 ### 4) Route and Candidate Generation
 1. Support direction modes: forward, reverse, both.
