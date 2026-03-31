@@ -13,4 +13,4 @@
 11. US-011: CLI reporting.
 12. US-012: Performance, rate-limit-aware execution and artifacts.
 
-Each story is defined as an independent implementation unit with clear acceptance criteria.
+Each story is defined as a modular implementation unit with clear interfaces, dependencies, and acceptance criteria.

@@ -8,12 +8,12 @@ Rate-limit-aware execution and reproducibility are required for dependable rollo
 
 ## Acceptance Criteria
 1. The system does not promise fixed completion time; it reports live progress based on current request throughput.
-2. During execution, CLI shows progress metrics including completed legs, requests sent, retries, and throttling/backoff events.
-3. Every run emits machine-readable artifacts including normalized input, selected policies, candidate summaries, and final classification.
-4. Artifacts can replay deterministic ranking in replay test cases using cached payloads.
-5. Long-run cancellation exits gracefully and preserves partial artifacts.
+2. During execution, CLI shows progress metrics including completed legs, requests sent, retries, and throttling or backoff events, refreshed every 5 seconds by default and immediately on critical state changes.
+3. Every run emits machine-readable artifacts in JSON with a common envelope (`runId`, `timestamp`, `schemaVersion`) and payloads for normalized input, selected policies, candidate summaries, and final classification.
+4. Artifacts follow a versioned schema contract; replay validates schema compatibility before execution and supports backward-compatible schemas or documented migration paths.
+5. Long-run cancellation via SIGINT or SIGTERM exits gracefully, preserves partial artifacts, and flushes pending logs.
 6. If request budget is exhausted or rate limits persist, the run returns partial results with unresolved segments clearly labeled.
-7. Request budget controls are configurable (max requests, max retries, max expansion rounds).
+7. Request budget controls are configurable with defaults and bounds: `maxRequests` (default 500, range 50-5000), `maxRetries` (default 5, range 0-10), and `maxExpansionRounds` (default 2, range 0-10).
 
 ## Dependencies
 1. Rate-limit simulation harness.

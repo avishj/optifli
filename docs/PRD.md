@@ -130,7 +130,7 @@ This is the kind of itinerary Optifli is designed for:
 1. Full automatic mode: optimize the whole trip at once.
 2. Interactive mode: let user lock a leg, then recompute remaining legs.
 3. CLI output includes grouped direction views (forward/reverse when requested), ranked full-trip plans, leg-level alternatives, constraints used, search policy trace, and status classification for partial/failed lookups.
-4. Save machine-readable artifacts for reproducibility and replay.
+4. Save machine-readable artifacts in JSON with a common envelope (`runId`, `timestamp`, `schemaVersion`) for reproducibility and replay.
 5. For each option, output shows whether it is standalone one-way or tied to a multi-city/round-trip bundle.
 
 ### 9) Reliability and Runtime Behavior
@@ -139,9 +139,9 @@ This is the kind of itinerary Optifli is designed for:
 3. Throttle requests to reduce API rate-limit risk.
 4. Return a structured result for every run, even when partially complete.
 5. Do not assume fixed completion times; runtime depends on external API limits and search complexity.
-6. Show live progress during long runs, including completed legs, retries, and throttling/backoff events.
+6. Show live progress during long runs, including completed legs, retries, and throttling/backoff events, with summary refresh every 5 seconds and immediate updates on critical events.
 7. When limits are hit, return best available partial results with clear coverage gaps.
-8. Support configurable request budgets (max requests, max retries, and max window-expansion rounds).
+8. Support configurable request budgets with defaults and bounds: `maxRequests` (default 500, range 50-5000), `maxRetries` (default 5, range 0-10), and `maxExpansionRounds` (default 2, range 0-10).
 
 ## Success Criteria
 1. The engine reliably returns either ranked plans or clearly classified partial output.
