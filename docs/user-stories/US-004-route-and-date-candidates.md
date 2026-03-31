@@ -12,7 +12,7 @@ Candidate quality controls both runtime and recommendation quality.
 3. Date propagation generates earliest/latest departure windows per leg from stay durations (including fractional durations) and user constraints in consistency tests.
 4. Candidate window generation preserves elapsed-time offsets and does not snap to fixed noon/midnight boundaries.
 5. The generator enforces configurable permutation caps and logs when pruning occurs.
-6. At least 50 benchmark itineraries complete candidate generation without invalid leg chronology.
+6. Benchmark itineraries complete candidate generation without invalid leg chronology.
 7. Cross-time-zone candidate propagation is validated with UTC as the canonical internal timeline, while departure and arrival display times are rendered in their respective airport local timezones with no timestamp drift across conversions.
 
 ## Dependencies

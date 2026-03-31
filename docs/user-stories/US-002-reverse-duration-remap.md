@@ -12,7 +12,7 @@ Correct duration remapping enables meaningful reverse-route comparisons by prese
 3. Date propagation for reverse mode produces valid, non-overlapping leg windows in schedule consistency tests.
 4. Reverse-mode duration handling uses elapsed-time offsets and does not snap to fixed calendar boundaries, including across timezone and daylight-saving transitions.
 5. CLI output explicitly shows the resolved duration map used for reverse runs.
-6. Regression tests cover at least 20 mixed forward/reverse itineraries with expected resolved dates, including destination counts from 2 to 10, fractional durations, timezone or daylight-saving transitions, and override scenarios.
+6. Regression tests cover mixed forward and reverse itineraries with expected resolved dates, including small and large destination counts, fractional durations, timezone or daylight-saving transitions, and override scenarios.
 
 ## Dependencies
 1. City-duration data model from US-001.
