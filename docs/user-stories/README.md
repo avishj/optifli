@@ -1,4 +1,4 @@
-# Optifli User Stories 
+# Optifli User Stories
 
 ## User-Facing Stories
 1. US-001: Itinerary and constraints.
