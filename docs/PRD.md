@@ -33,8 +33,9 @@ This is the kind of itinerary Optifli is designed for:
 6. Construction: how tickets are combined (one-way, multi-city, round-trip, or mixed).
 7. Global plan: one complete end-to-end candidate for the whole trip.
 8. Leg alternative: a replaceable option for a specific leg within a global plan.
-9. Coverage gap: part of the search space not fully explored due to limits (for example rate limits or request budget).
-10. Round-trip compatibility rule: the minimum conditions needed to treat two opposite-direction legs as one round-trip candidate.
+9. Leg swap: replacing one leg alternative with another within a global plan while preserving hard constraints.
+10. Coverage gap: part of the search space not fully explored due to limits (for example rate limits or request budget).
+11. Round-trip compatibility rule: the minimum conditions needed to treat two opposite-direction legs as one round-trip candidate.
 
 ## Goals
 1. Generate valid optimization results for itineraries with an origin, up to 10 destination cities, and a final return city.
@@ -69,7 +70,7 @@ This is the kind of itinerary Optifli is designed for:
 2. The CLI accepts stay durations per destination.
 3. Stay duration supports fractional values, including half-day and smaller units.
 4. Stay duration can be entered as fractional days or hours.
-5. The system must treat stay duration as elapsed time from arrival, not as fixed calendar buckets.
+5. The system must treat stay duration as elapsed time from arrival, not as fixed calendar buckets (see Section 2 for timezone and daylight-saving handling).
 6. There must be no hard noon/midnight boundary assumption.
 7. The CLI accepts per-leg departure windows with start and end datetime.
 8. Cross-day windows are valid and searched fully.
@@ -112,7 +113,7 @@ This is the kind of itinerary Optifli is designed for:
 ### 6) Booking Construction
 1. Generate all-one-way candidate plans.
 2. Generate valid multi-city booking candidates.
-3. Build round-trip candidates only when outbound and inbound legs are opposite-direction travel between the same city groups and satisfy traveler constraints.
+3. Build round-trip candidates only when outbound and inbound legs are opposite-direction travel between the same city groups and satisfy traveler constraints (passenger mix, cabin or fare restrictions, airport-group compatibility, and configured time windows).
 4. Include a round-trip candidate only if FLI returns a valid round-trip fare quote for that paired request.
 5. Allow mixed constructions across a single trip.
 6. De-duplicate equivalent plans.
