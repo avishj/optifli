@@ -8,12 +8,12 @@ Without structured input and constraint validation, optimization results are unr
 
 ## Acceptance Criteria
 1. The CLI accepts itinerary inputs with 1 origin city, 1-10 destination cities, and 1 final return city via flags or profile file.
-2. The CLI accepts per-destination stay durations as fractional days or hours (for example: HAN=2d, DAD=1.5d, PQC=2.5d, SIN=0.5d; or 12h, 30h) and validates required values in <=1 second for a 10-destination payload on a standard developer workstation.
+2. The CLI accepts per-destination stay durations in these formats: `<number>d` (fractional days allowed, for example `2d`, `1.5d`, `0.5d`) and `<number>h` (fractional hours allowed, for example `12h`, `30h`, `2.5h`); compound formats like `1d12h` are rejected in this version.
 3. The CLI accepts per-leg departure windows as start/end datetime, including cross-day windows.
 4. Stay durations are applied as elapsed time from arrival, with no hard noon or midnight boundary assumptions (for example: 0.5d means 12 hours from the arrival timestamp).
 5. Invalid inputs return actionable errors (field, reason, fix hint), and this behavior is covered by validation tests.
 6. Schema validation unit tests provide strong coverage for input parsing and validation modules.
-7. Date/time parsing requires timezone context (offset or named timezone), with clear validation errors for missing timezone.
+7. Date/time parsing requires timezone context using either UTC offset format (`+/-HH:MM`, for example `+05:30`) or IANA timezone names (for example `Asia/Kolkata`), with clear validation errors for missing or invalid timezone values.
 
 ## Dependencies
 1. CLI argument parser and config loader.
