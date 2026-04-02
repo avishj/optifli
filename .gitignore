@@ -1,0 +1,43 @@
+# SPDX-FileCopyrightText: 2026 Avish Jha <avish.j@pm.me>
+#
+# SPDX-License-Identifier: AGPL-3.0-or-later
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+
+# Distribution
+build/
+dist/
+
+# Virtual environments
+.venv/
+
+# Testing / coverage
+.pytest_cache/
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+results.xml
+
+# Linting
+.ruff_cache/
+
+# Type checking
+.ty/
+
+# SonarCloud
+.scannerwork/
+
+# Docs
+site/
+
+# OS
+.DS_Store
+
+# Environment
+.env
+.env.*
+!.env.example

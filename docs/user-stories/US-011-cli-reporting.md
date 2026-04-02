@@ -1,3 +1,9 @@
+<!--
+SPDX-FileCopyrightText: 2026 Avish Jha <avish.j@pm.me>
+
+SPDX-License-Identifier: AGPL-3.0-or-later
+-->
+
 # US-011: CLI Reporting and Explainability
 
 ## Type
@@ -22,4 +28,3 @@ Readable outputs improve decision speed and reduce confusion.
 
 ## Linked Engineering Specs
 1. docs/engineering-specs/ES-003-reporting-contract.md
-

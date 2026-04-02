@@ -1,3 +1,9 @@
+<!--
+SPDX-FileCopyrightText: 2026 Avish Jha <avish.j@pm.me>
+
+SPDX-License-Identifier: AGPL-3.0-or-later
+-->
+
 # PRD: Optifli Flight Optimization Engine
 
 ## What We Are Building
@@ -20,7 +26,7 @@ This is the kind of itinerary Optifli is designed for:
 2. Route (city names): Delhi -> Hanoi -> Da Nang -> Phu Quoc -> Singapore -> Delhi.
 3. Stay durations (including half-day): HAN=2d, DAD=1.5d, PQC=3d, SIN=0.5d.
 4. Half-day interpretation: SIN=0.5d means the next leg can depart no earlier than 12 hours after arrival in SIN.
-5. Example departure window for one leg: DEL -> HAN can depart between 2026-07-16 19:00 IST and 2026-07-17 11:00 IST.
+5. Example departure window for one leg: DEL -> HAN can depart between 2026-07-16 19:00 Indian standard time and 2026-07-17 11:00 Indian standard time.
 6. Reverse mode means the same city durations still apply to the same cities, even though leg order flips.
 7. The engine compares one-way, multi-city, round-trip, and mixed constructions.
 

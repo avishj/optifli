@@ -1,3 +1,9 @@
+<!--
+SPDX-FileCopyrightText: 2026 Avish Jha <avish.j@pm.me>
+
+SPDX-License-Identifier: AGPL-3.0-or-later
+-->
+
 # US-010: Rate-Limit Resilience and Outcome Classification
 
 ## Type
@@ -21,4 +27,3 @@ Accurate failure classification drives user trust and better retries.
 
 ## Linked Engineering Specs
 1. docs/engineering-specs/ES-004-rate-limit-resilience.md
-

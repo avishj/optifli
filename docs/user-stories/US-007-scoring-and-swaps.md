@@ -1,3 +1,9 @@
+<!--
+SPDX-FileCopyrightText: 2026 Avish Jha <avish.j@pm.me>
+
+SPDX-License-Identifier: AGPL-3.0-or-later
+-->
+
 # US-007: Score, Rank, and Surface Leg Swaps
 
 ## Type
@@ -25,4 +31,3 @@ Explainable ranking increases trust and booking confidence.
 ## Linked Engineering Specs
 1. docs/engineering-specs/ES-002-scoring-contract.md
 2. docs/TBD.md
-
