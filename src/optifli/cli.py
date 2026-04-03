@@ -18,6 +18,7 @@ from optifli.exit_codes import ExitCode
 from optifli.logging import setup_logging
 from optifli.models.itinerary import Itinerary
 from optifli.profile import ProfileError, load_profile
+from optifli.wizard import collect_itinerary
 
 logger = logging.getLogger(__name__)
 
@@ -69,22 +70,21 @@ def optimize(
         Parameter("--profile", help="Path to a JSON profile file."),
     ] = None,
 ) -> ExitCode:
-    """Search for optimal flights from a profile.
+    """Collect or load itinerary input for optimization.
 
     Parameters
     ----------
     profile:
-        Path to a JSON itinerary profile.
+        Optional path to a JSON itinerary profile.
     """
     if profile is None:
-        console.print("[red]Error:[/red] --profile is required")
-        return ExitCode.USAGE
-
-    try:
-        itinerary = load_profile(profile)
-    except ProfileError as exc:
-        console.print(f"[red]Error:[/red] {exc}")
-        return ExitCode.USAGE
+        itinerary = collect_itinerary()
+    else:
+        try:
+            itinerary = load_profile(profile)
+        except ProfileError as exc:
+            console.print(f"[red]Error:[/red] {exc}")
+            return ExitCode.USAGE
 
     logger.debug("loaded itinerary with %d destinations", len(itinerary.destinations))
     _print_itinerary(itinerary)

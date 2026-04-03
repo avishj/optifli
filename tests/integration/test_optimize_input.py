@@ -10,6 +10,7 @@ from pathlib import Path
 import pytest
 
 from optifli.exit_codes import ExitCode
+from optifli.models.itinerary import Itinerary
 
 pytestmark = pytest.mark.integration
 
@@ -56,6 +57,20 @@ class TestOptimizeInvalidProfile:
 
 
 class TestOptimizeNoProfile:
-    def test_no_profile_flag(self, invoke):
+    def test_runs_wizard(self, invoke, monkeypatch):
+        monkeypatch.setattr(
+            "optifli.cli.collect_itinerary",
+            lambda: Itinerary(
+                origin={"name": "DEL", "airports": ["DEL"]},
+                destinations=[
+                    {
+                        "city": {"name": "HAN", "airports": ["HAN"]},
+                        "stay": "2d",
+                    },
+                ],
+                return_city={"name": "DEL", "airports": ["DEL"]},
+            ),
+        )
         result = invoke("optimize")
-        assert result.exit_code == ExitCode.USAGE
+        assert result.exit_code == ExitCode.OK
+        assert "DEL" in result.output

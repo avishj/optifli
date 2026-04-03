@@ -1,0 +1,95 @@
+# SPDX-FileCopyrightText: 2026 Avish Jha <avish.j@pm.me>
+#
+# SPDX-License-Identifier: AGPL-3.0-or-later
+
+"""Unit tests for the interactive itinerary wizard."""
+
+import pytest
+
+from optifli.models.itinerary import DirectionMode, RouteMode
+from optifli.wizard import collect_itinerary
+
+pytestmark = pytest.mark.unit
+
+
+def _patch_prompts(monkeypatch, prompt_answers, confirm_answers):
+    prompt_iter = iter(prompt_answers)
+    confirm_iter = iter(confirm_answers)
+    prompt_calls = []
+
+    def fake_prompt_ask(prompt, **_kwargs):
+        prompt_calls.append(prompt)
+        return next(prompt_iter)
+
+    def fake_confirm_ask(_prompt, **_kwargs):
+        return next(confirm_iter)
+
+    monkeypatch.setattr("optifli.wizard.Prompt.ask", fake_prompt_ask)
+    monkeypatch.setattr("optifli.wizard.Confirm.ask", fake_confirm_ask)
+    return prompt_calls
+
+
+class TestCollectItineraryValid:
+    def test_collects_single_destination(self, monkeypatch):
+        prompt_calls = _patch_prompts(
+            monkeypatch,
+            prompt_answers=["del", "han", "2d", "del", "both", "reorder"],
+            confirm_answers=[False],
+        )
+
+        itinerary = collect_itinerary()
+
+        assert itinerary.origin.name == "DEL"
+        assert itinerary.origin.airports == ["DEL"]
+        assert len(itinerary.destinations) == 1
+        assert itinerary.destinations[0].city.airports == ["HAN"]
+        assert itinerary.destinations[0].stay.total_days == 2.0
+        assert itinerary.return_city.airports == ["DEL"]
+        assert itinerary.direction is DirectionMode.BOTH
+        assert itinerary.route_mode is RouteMode.REORDER
+        assert prompt_calls == [
+            "Origin airport code",
+            "Destination 1 airport code",
+            "Destination 1 stay duration",
+            "Return airport code",
+            "Direction mode",
+            "Route mode",
+        ]
+
+
+class TestCollectItineraryValidation:
+    def test_reprompts_after_invalid_input(self, monkeypatch, capsys):
+        prompt_calls = _patch_prompts(
+            monkeypatch,
+            prompt_answers=[
+                "de",
+                "del",
+                "han",
+                "1d12h",
+                "2d",
+                "12a",
+                "del",
+                "sideways",
+                "forward",
+                "shuffle",
+                "fixed",
+            ],
+            confirm_answers=[False],
+        )
+
+        itinerary = collect_itinerary()
+        captured = capsys.readouterr()
+
+        assert itinerary.origin.airports == ["DEL"]
+        assert itinerary.return_city.airports == ["DEL"]
+        assert itinerary.direction is DirectionMode.FORWARD
+        assert itinerary.route_mode is RouteMode.FIXED
+        assert prompt_calls.count("Origin airport code") == 2
+        assert prompt_calls.count("Destination 1 stay duration") == 2
+        assert prompt_calls.count("Return airport code") == 2
+        assert prompt_calls.count("Direction mode") == 2
+        assert prompt_calls.count("Route mode") == 2
+        assert "not a valid IATA code" in captured.err
+        assert "Invalid duration format" in captured.err
+        assert "not a valid direction mode" in captured.err
+        assert "not a valid route mode" in captured.err
