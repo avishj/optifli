@@ -4,11 +4,39 @@
 
 """Itinerary domain models."""
 
+from enum import StrEnum
+
 from pydantic import BaseModel
 
 from optifli.models.airport import CityGroup
 from optifli.models.duration import Duration
 from optifli.models.window import ArrivalCutoff, DepartureWindow
+
+
+class DirectionMode(StrEnum):
+    """Which direction(s) to search the itinerary.
+
+    Attributes:
+        FORWARD: Search in the given destination order.
+        REVERSE: Search in reversed destination order.
+        BOTH: Search both forward and reverse orders.
+    """
+
+    FORWARD = "forward"
+    REVERSE = "reverse"
+    BOTH = "both"
+
+
+class RouteMode(StrEnum):
+    """Whether destination order is fixed or may be reordered.
+
+    Attributes:
+        FIXED: Keep destinations in the given order.
+        REORDER: Allow the optimizer to reorder destinations.
+    """
+
+    FIXED = "fixed"
+    REORDER = "reorder"
 
 
 class Destination(BaseModel, frozen=True):

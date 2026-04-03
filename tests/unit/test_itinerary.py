@@ -9,9 +9,46 @@ from datetime import UTC, datetime
 import pytest
 from pydantic import ValidationError
 
-from optifli.models.itinerary import Destination, Leg
+from optifli.models.itinerary import Destination, DirectionMode, Leg, RouteMode
 
 pytestmark = pytest.mark.unit
+
+
+class TestDirectionMode:
+    def test_values(self):
+        assert DirectionMode.FORWARD == "forward"
+        assert DirectionMode.REVERSE == "reverse"
+        assert DirectionMode.BOTH == "both"
+
+    def test_string_identity(self):
+        assert DirectionMode.FORWARD == "forward"
+        assert isinstance(DirectionMode.FORWARD, str)
+
+    def test_case_insensitive_lookup(self):
+        assert DirectionMode("forward") is DirectionMode.FORWARD
+        assert DirectionMode("FORWARD".lower()) is DirectionMode.FORWARD
+
+    def test_invalid_value(self):
+        with pytest.raises(ValueError, match="not a valid"):
+            DirectionMode("diagonal")
+
+
+class TestRouteMode:
+    def test_values(self):
+        assert RouteMode.FIXED == "fixed"
+        assert RouteMode.REORDER == "reorder"
+
+    def test_string_identity(self):
+        assert RouteMode.FIXED == "fixed"
+        assert isinstance(RouteMode.FIXED, str)
+
+    def test_case_insensitive_lookup(self):
+        assert RouteMode("fixed") is RouteMode.FIXED
+        assert RouteMode("FIXED".lower()) is RouteMode.FIXED
+
+    def test_invalid_value(self):
+        with pytest.raises(ValueError, match="not a valid"):
+            RouteMode("shuffle")
 
 
 class TestDestinationValid:
