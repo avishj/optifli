@@ -4,6 +4,7 @@
 
 """Domain models for optifli."""
 
+from optifli.models.airport import IATACode
 from optifli.models.duration import Duration
 
-__all__ = ["Duration"]
+__all__ = ["Duration", "IATACode"]
