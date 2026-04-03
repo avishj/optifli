@@ -16,7 +16,8 @@ from optifli import __version__
 from optifli.config import settings
 from optifli.exit_codes import ExitCode
 from optifli.logging import setup_logging
-from optifli.models.itinerary import Itinerary
+from optifli.models import remap_for_reverse
+from optifli.models.itinerary import Destination, DirectionMode, Itinerary
 from optifli.profile import ProfileError, load_profile
 from optifli.wizard import collect_itinerary
 
@@ -62,6 +63,54 @@ def _print_itinerary(itinerary: Itinerary) -> None:
     _out.print(table)
 
 
+def _format_destination(destination: Destination) -> str:
+    """Format one destination for CLI display."""
+    city = destination.city
+    return f"{city.name} ({', '.join(city.airports)}) - {destination.stay}"
+
+
+def _print_reverse_map(itinerary: Itinerary) -> None:
+    """Print the resolved reverse destination-duration map."""
+    table = Table(title="Reverse Duration Map")
+    table.add_column("Step", style="bold")
+    table.add_column("Destination")
+
+    for index, destination in enumerate(remap_for_reverse(itinerary), start=1):
+        table.add_row(str(index), _format_destination(destination))
+
+    _out.print(table)
+
+
+def _print_direction_comparison(itinerary: Itinerary) -> None:
+    """Print forward and reverse duration maps side by side."""
+    table = Table(title="Direction Comparison")
+    table.add_column("Step", style="bold")
+    table.add_column("Forward")
+    table.add_column("Reverse")
+
+    forward = itinerary.destinations
+    reverse = remap_for_reverse(itinerary)
+    for index, (forward_destination, reverse_destination) in enumerate(
+        zip(forward, reverse, strict=True),
+        start=1,
+    ):
+        table.add_row(
+            str(index),
+            _format_destination(forward_destination),
+            _format_destination(reverse_destination),
+        )
+
+    _out.print(table)
+
+
+def _print_direction_resolution(itinerary: Itinerary) -> None:
+    """Print resolved duration maps for reverse-aware directions."""
+    if itinerary.direction is DirectionMode.REVERSE:
+        _print_reverse_map(itinerary)
+    elif itinerary.direction is DirectionMode.BOTH:
+        _print_direction_comparison(itinerary)
+
+
 @app.command
 def optimize(
     *,
@@ -88,6 +137,7 @@ def optimize(
 
     logger.debug("loaded itinerary with %d destinations", len(itinerary.destinations))
     _print_itinerary(itinerary)
+    _print_direction_resolution(itinerary)
     return ExitCode.OK
 
 
