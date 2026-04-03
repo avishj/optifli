@@ -5,6 +5,7 @@
 """Shared test fixtures."""
 
 from collections.abc import Callable
+from pathlib import Path
 from typing import NamedTuple
 
 import pytest
@@ -17,6 +18,12 @@ class CliResult(NamedTuple):
 
     exit_code: int
     output: str
+
+
+@pytest.fixture(scope="session")
+def profiles_dir() -> Path:
+    """Return the directory containing shared JSON profile fixtures."""
+    return Path(__file__).resolve().parent / "fixtures" / "profiles"
 
 
 @pytest.fixture

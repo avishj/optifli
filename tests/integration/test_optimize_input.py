@@ -5,7 +5,6 @@
 """Integration tests for the optimize command input handling."""
 
 import json
-from pathlib import Path
 
 import pytest
 
@@ -14,18 +13,16 @@ from optifli.models.itinerary import Itinerary
 
 pytestmark = pytest.mark.integration
 
-_FIXTURES = Path(__file__).resolve().parent.parent / "fixtures" / "profiles"
-
 
 class TestOptimizeValidProfile:
-    def test_minimal_profile(self, invoke):
-        result = invoke("optimize", "--profile", str(_FIXTURES / "minimal.json"))
+    def test_minimal_profile(self, invoke, profiles_dir):
+        result = invoke("optimize", "--profile", str(profiles_dir / "minimal.json"))
         assert result.exit_code == ExitCode.OK
         assert "Delhi" in result.output
         assert "Hanoi" in result.output
 
-    def test_full_profile(self, invoke):
-        result = invoke("optimize", "--profile", str(_FIXTURES / "full.json"))
+    def test_full_profile(self, invoke, profiles_dir):
+        result = invoke("optimize", "--profile", str(profiles_dir / "full.json"))
         assert result.exit_code == ExitCode.OK
         assert "Da Nang" in result.output
         assert "both" in result.output
