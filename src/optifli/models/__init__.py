@@ -6,5 +6,6 @@
 
 from optifli.models.airport import CityGroup, IATACode
 from optifli.models.duration import Duration
+from optifli.models.itinerary import Destination
 
-__all__ = ["CityGroup", "Duration", "IATACode"]
+__all__ = ["CityGroup", "Destination", "Duration", "IATACode"]

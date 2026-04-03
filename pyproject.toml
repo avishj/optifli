@@ -167,6 +167,7 @@ unknown-argument = "ignore"      # pydantic-settings underscore kwargs
 no-matching-overload = "ignore"  # dict.get in model validators
 invalid-assignment = "ignore"    # dict mutations in model validators
 invalid-return-type = "ignore"   # model validator return types
+invalid-argument-type = "ignore" # Pydantic coerces dicts/strings to models
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
