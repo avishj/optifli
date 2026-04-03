@@ -5,10 +5,13 @@
 """End-to-end tests invoking the CLI as a subprocess."""
 
 import subprocess
+from pathlib import Path
 
 import pytest
 
 pytestmark = pytest.mark.e2e
+
+_FIXTURES = Path(__file__).resolve().parent.parent / "fixtures" / "profiles"
 
 
 def _run(*args: str) -> subprocess.CompletedProcess[str]:
@@ -26,10 +29,11 @@ def test_version_flag():
     assert result.stdout.strip()
 
 
-def test_hello_command():
-    result = _run("hello", "World")
+def test_optimize_profile():
+    result = _run("optimize", "--profile", str(_FIXTURES / "minimal.json"))
     assert result.returncode == 0
-    assert "World" in result.stdout
+    assert "Delhi" in result.stdout
+    assert "Hanoi" in result.stdout
 
 
 def test_no_args_shows_help():
