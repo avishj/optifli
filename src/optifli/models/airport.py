@@ -2,13 +2,13 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-"""IATA airport code validation."""
+"""IATA airport code validation and city group model."""
 
 import re
-from typing import Annotated
+from typing import Annotated, Self
 
 from fli.models import Airport
-from pydantic import BeforeValidator
+from pydantic import BaseModel, BeforeValidator, model_validator
 
 _IATA_RE = re.compile(r"^[A-Z]{3}$")
 
@@ -35,3 +35,27 @@ def _validate_iata(value: str) -> str:
 
 IATACode = Annotated[str, BeforeValidator(_validate_iata)]
 """A 3-letter IATA airport code validated against the FLI airport database."""
+
+
+class CityGroup(BaseModel, frozen=True):
+    """A named group of airports representing a city or region.
+
+    Attributes:
+        name: User-facing label (e.g. ``"Delhi"``).
+        airports: Airports to search (at least one required).
+    """
+
+    name: str
+    airports: list[IATACode]
+
+    @model_validator(mode="after")
+    def _validate_airports(self) -> Self:
+        if not self.airports:
+            msg = "'airports' must contain at least one airport code"
+            raise ValueError(msg)
+
+        if len(set(self.airports)) != len(self.airports):
+            msg = "'airports' contains duplicate airport codes"
+            raise ValueError(msg)
+
+        return self

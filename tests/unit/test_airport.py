@@ -7,7 +7,7 @@
 import pytest
 from pydantic import BaseModel, ValidationError
 
-from optifli.models.airport import IATACode
+from optifli.models.airport import CityGroup, IATACode
 
 pytestmark = pytest.mark.unit
 
@@ -54,3 +54,27 @@ class TestInvalidCodes:
     def test_not_in_fli_enum(self):
         with pytest.raises(ValidationError, match="not a recognized IATA airport"):
             _IATAModel(code="ZZZ")
+
+
+class TestCityGroupValid:
+    def test_single_airport(self):
+        g = CityGroup(name="Delhi", airports=["DEL"])
+        assert g.airports == ["DEL"]
+
+    def test_multiple_airports(self):
+        g = CityGroup(name="London", airports=["LHR", "LGW", "STN"])
+        assert g.airports == ["LHR", "LGW", "STN"]
+
+    def test_lowercase_normalised(self):
+        g = CityGroup(name="Delhi", airports=["del"])
+        assert g.airports == ["DEL"]
+
+
+class TestCityGroupInvalid:
+    def test_empty_airports(self):
+        with pytest.raises(ValidationError, match="at least one airport"):
+            CityGroup(name="Empty", airports=[])
+
+    def test_duplicate_airports(self):
+        with pytest.raises(ValidationError, match="duplicate"):
+            CityGroup(name="Dup", airports=["DEL", "DEL"])
