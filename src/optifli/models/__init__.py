@@ -13,6 +13,7 @@ from optifli.models.itinerary import (
     Leg,
     RouteMode,
 )
+from optifli.models.remap import apply_overrides, remap_for_reverse
 
 __all__ = [
     "CityGroup",
@@ -23,4 +24,6 @@ __all__ = [
     "Itinerary",
     "Leg",
     "RouteMode",
+    "apply_overrides",
+    "remap_for_reverse",
 ]
