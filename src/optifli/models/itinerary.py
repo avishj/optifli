@@ -5,8 +5,9 @@
 """Itinerary domain models."""
 
 from enum import StrEnum
+from typing import Self
 
-from pydantic import BaseModel
+from pydantic import BaseModel, model_validator
 
 from optifli.models.airport import CityGroup
 from optifli.models.duration import Duration
@@ -65,3 +66,40 @@ class Leg(BaseModel, frozen=True):
     destination: CityGroup
     departure_window: DepartureWindow
     arrival_cutoff: ArrivalCutoff | None = None
+
+
+_MAX_DESTINATIONS = 10
+
+
+class Itinerary(BaseModel, frozen=True):
+    """The full itinerary container.
+
+    Attributes:
+        origin: Starting city group.
+        destinations: Cities to visit (1-10).
+        return_city: City to return to at the end.
+        direction: Search direction mode.
+        route_mode: Whether destination order is fixed or reorderable.
+        legs: Explicit per-leg departure windows (optional).
+    """
+
+    origin: CityGroup
+    destinations: list[Destination]
+    return_city: CityGroup
+    direction: DirectionMode = DirectionMode.FORWARD
+    route_mode: RouteMode = RouteMode.FIXED
+    legs: list[Leg] = []
+
+    @model_validator(mode="after")
+    def _validate_destinations(self) -> Self:
+        count = len(self.destinations)
+        if count < 1:
+            msg = "'destinations' must contain at least one destination"
+            raise ValueError(msg)
+        if count > _MAX_DESTINATIONS:
+            msg = (
+                f"'destinations' must contain at most "
+                f"{_MAX_DESTINATIONS} destinations, got {count}"
+            )
+            raise ValueError(msg)
+        return self

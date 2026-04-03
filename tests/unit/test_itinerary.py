@@ -9,7 +9,13 @@ from datetime import UTC, datetime
 import pytest
 from pydantic import ValidationError
 
-from optifli.models.itinerary import Destination, DirectionMode, Leg, RouteMode
+from optifli.models.itinerary import (
+    Destination,
+    DirectionMode,
+    Itinerary,
+    Leg,
+    RouteMode,
+)
 
 pytestmark = pytest.mark.unit
 
@@ -181,4 +187,82 @@ class TestLegNestedValidation:
                     "start": datetime(2026, 7, 17, 11, 0, tzinfo=UTC),
                     "end": datetime(2026, 7, 16, 19, 0, tzinfo=UTC),
                 },
+            )
+
+
+_DELHI = {"name": "Delhi", "airports": ["DEL"]}
+_HANOI = {"name": "Hanoi", "airports": ["HAN"]}
+_DANANG = {"name": "Da Nang", "airports": ["DAD"]}
+
+
+def _dest(city: dict, stay: str = "2d"):
+    return {"city": city, "stay": stay}
+
+
+class TestItineraryValid:
+    def test_single_destination(self):
+        it = Itinerary(
+            origin=_DELHI,
+            destinations=[_dest(_HANOI)],
+            return_city=_DELHI,
+        )
+        assert len(it.destinations) == 1
+        assert it.direction is DirectionMode.FORWARD
+        assert it.route_mode is RouteMode.FIXED
+        assert it.legs == []
+
+    def test_multiple_destinations(self):
+        it = Itinerary(
+            origin=_DELHI,
+            destinations=[_dest(_HANOI), _dest(_DANANG, "1.5d")],
+            return_city=_DELHI,
+        )
+        assert len(it.destinations) == 2
+
+    def test_ten_destinations(self):
+        dests = [_dest(_HANOI, f"{i + 1}d") for i in range(10)]
+        it = Itinerary(
+            origin=_DELHI,
+            destinations=dests,
+            return_city=_DELHI,
+        )
+        assert len(it.destinations) == 10
+
+    def test_origin_differs_from_return(self):
+        it = Itinerary(
+            origin=_DELHI,
+            destinations=[_dest(_HANOI)],
+            return_city=_DANANG,
+        )
+        assert it.origin.name == "Delhi"
+        assert it.return_city.name == "Da Nang"
+
+    def test_explicit_direction_and_route(self):
+        it = Itinerary(
+            origin=_DELHI,
+            destinations=[_dest(_HANOI)],
+            return_city=_DELHI,
+            direction="both",
+            route_mode="reorder",
+        )
+        assert it.direction is DirectionMode.BOTH
+        assert it.route_mode is RouteMode.REORDER
+
+
+class TestItineraryInvalid:
+    def test_zero_destinations_rejected(self):
+        with pytest.raises(ValidationError, match="at least one"):
+            Itinerary(
+                origin=_DELHI,
+                destinations=[],
+                return_city=_DELHI,
+            )
+
+    def test_eleven_destinations_rejected(self):
+        dests = [_dest(_HANOI, f"{i + 1}d") for i in range(11)]
+        with pytest.raises(ValidationError, match="at most 10"):
+            Itinerary(
+                origin=_DELHI,
+                destinations=dests,
+                return_city=_DELHI,
             )

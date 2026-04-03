@@ -6,7 +6,13 @@
 
 from optifli.models.airport import CityGroup, IATACode
 from optifli.models.duration import Duration
-from optifli.models.itinerary import Destination, DirectionMode, Leg, RouteMode
+from optifli.models.itinerary import (
+    Destination,
+    DirectionMode,
+    Itinerary,
+    Leg,
+    RouteMode,
+)
 
 __all__ = [
     "CityGroup",
@@ -14,6 +20,7 @@ __all__ = [
     "DirectionMode",
     "Duration",
     "IATACode",
+    "Itinerary",
     "Leg",
     "RouteMode",
 ]
