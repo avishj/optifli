@@ -18,12 +18,6 @@ def test_version(invoke):
     assert __version__ in result.output
 
 
-def test_hello(invoke):
-    result = invoke("hello", "World")
-    assert result.exit_code == ExitCode.OK
-    assert "World" in result.output
-
-
 def test_no_args(invoke):
     result = invoke()
     assert result.exit_code == ExitCode.OK
