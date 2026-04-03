@@ -1,0 +1,20 @@
+{
+  "origin": { "name": "Delhi", "include": ["DEL"] },
+  "destinations": [
+    { "city": { "name": "Hanoi", "include": ["HAN"] }, "stay": "2d" },
+    { "city": { "name": "Da Nang", "include": ["DAD"] }, "stay": "1.5d" }
+  ],
+  "return_city": { "name": "Delhi", "include": ["DEL"] },
+  "direction": "both",
+  "route_mode": "fixed",
+  "legs": [
+    {
+      "origin": { "name": "Delhi", "include": ["DEL"] },
+      "destination": { "name": "Hanoi", "include": ["HAN"] },
+      "departure_window": {
+        "start": "2026-07-16T19:00:00+05:30",
+        "end": "2026-07-17T11:00:00+05:30"
+      }
+    }
+  ]
+}

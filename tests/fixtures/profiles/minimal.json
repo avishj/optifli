@@ -1,0 +1,7 @@
+{
+  "origin": { "name": "Delhi", "include": ["DEL"] },
+  "destinations": [
+    { "city": { "name": "Hanoi", "include": ["HAN"] }, "stay": "2d" }
+  ],
+  "return_city": { "name": "Delhi", "include": ["DEL"] }
+}
