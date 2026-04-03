@@ -8,6 +8,7 @@ from pydantic import BaseModel
 
 from optifli.models.airport import CityGroup
 from optifli.models.duration import Duration
+from optifli.models.window import ArrivalCutoff, DepartureWindow
 
 
 class Destination(BaseModel, frozen=True):
@@ -20,3 +21,19 @@ class Destination(BaseModel, frozen=True):
 
     city: CityGroup
     stay: Duration
+
+
+class Leg(BaseModel, frozen=True):
+    """One flight segment between two city groups.
+
+    Attributes:
+        origin: Departure city group.
+        destination: Arrival city group.
+        departure_window: When the flight should depart.
+        arrival_cutoff: Optional upper-bound arrival time.
+    """
+
+    origin: CityGroup
+    destination: CityGroup
+    departure_window: DepartureWindow
+    arrival_cutoff: ArrivalCutoff | None = None

@@ -4,10 +4,12 @@
 
 """Unit tests for itinerary models."""
 
+from datetime import UTC, datetime
+
 import pytest
 from pydantic import ValidationError
 
-from optifli.models.itinerary import Destination
+from optifli.models.itinerary import Destination, Leg
 
 pytestmark = pytest.mark.unit
 
@@ -65,4 +67,81 @@ class TestDestinationNestedValidation:
             Destination(
                 city={"name": "Hanoi", "airports": ["HAN"]},
                 stay="0d",
+            )
+
+
+class TestLegValid:
+    def test_basic_leg(self):
+        leg = Leg(
+            origin={"name": "Delhi", "airports": ["DEL"]},
+            destination={"name": "Hanoi", "airports": ["HAN"]},
+            departure_window={
+                "start": datetime(2026, 7, 16, 19, 0, tzinfo=UTC),
+                "end": datetime(2026, 7, 17, 11, 0, tzinfo=UTC),
+            },
+        )
+        assert leg.origin.airports == ["DEL"]
+        assert leg.destination.airports == ["HAN"]
+        assert leg.arrival_cutoff is None
+
+    def test_leg_with_arrival_cutoff(self):
+        leg = Leg(
+            origin={"name": "Delhi", "airports": ["DEL"]},
+            destination={"name": "Hanoi", "airports": ["HAN"]},
+            departure_window={
+                "start": datetime(2026, 7, 16, 19, 0, tzinfo=UTC),
+                "end": datetime(2026, 7, 17, 11, 0, tzinfo=UTC),
+            },
+            arrival_cutoff={
+                "deadline": datetime(2026, 7, 17, 23, 0, tzinfo=UTC),
+            },
+        )
+        assert leg.arrival_cutoff is not None
+        assert leg.arrival_cutoff.deadline.year == 2026
+
+    def test_leg_multi_airport_groups(self):
+        leg = Leg(
+            origin={"name": "London", "airports": ["LHR", "LGW"]},
+            destination={"name": "Tokyo", "airports": ["NRT", "HND"]},
+            departure_window={
+                "start": datetime(2026, 8, 1, 6, 0, tzinfo=UTC),
+                "end": datetime(2026, 8, 1, 14, 0, tzinfo=UTC),
+            },
+        )
+        assert len(leg.origin.airports) == 2
+        assert len(leg.destination.airports) == 2
+
+
+class TestLegNestedValidation:
+    def test_bad_airport_bubbles_up(self):
+        with pytest.raises(ValidationError, match="not a recognized IATA"):
+            Leg(
+                origin={"name": "Nowhere", "airports": ["ZZZ"]},
+                destination={"name": "Hanoi", "airports": ["HAN"]},
+                departure_window={
+                    "start": datetime(2026, 7, 16, 19, 0, tzinfo=UTC),
+                    "end": datetime(2026, 7, 17, 11, 0, tzinfo=UTC),
+                },
+            )
+
+    def test_naive_datetime_bubbles_up(self):
+        with pytest.raises(ValidationError, match="timezone-aware"):
+            Leg(
+                origin={"name": "Delhi", "airports": ["DEL"]},
+                destination={"name": "Hanoi", "airports": ["HAN"]},
+                departure_window={
+                    "start": datetime(2026, 7, 16, 19, 0),
+                    "end": datetime(2026, 7, 17, 11, 0),
+                },
+            )
+
+    def test_window_end_before_start_bubbles_up(self):
+        with pytest.raises(ValidationError, match="before"):
+            Leg(
+                origin={"name": "Delhi", "airports": ["DEL"]},
+                destination={"name": "Hanoi", "airports": ["HAN"]},
+                departure_window={
+                    "start": datetime(2026, 7, 17, 11, 0, tzinfo=UTC),
+                    "end": datetime(2026, 7, 16, 19, 0, tzinfo=UTC),
+                },
             )
