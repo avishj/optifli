@@ -55,7 +55,9 @@ class Duration(BaseModel, frozen=True):
     def model_post_init(self, _context: object) -> None:
         """Compute the internal timedelta after validation."""
         match = _DURATION_RE.match(self.raw)
-        assert match  # guaranteed by _parse  # noqa: S101
+        if not match:  # pragma: no cover — guaranteed by _parse
+            msg = f"Unparsable duration: {self.raw}"
+            raise ValueError(msg)
         value = float(match.group(1))
         unit = match.group(2).lower()
         td = timedelta(days=value) if unit == "d" else timedelta(hours=value)

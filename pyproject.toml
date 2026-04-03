@@ -145,6 +145,7 @@ ignore = [
     "PLR2004", # magic values in tests
     "SLF001", # private member access in tests
     "FBT",    # boolean traps in tests
+    "DTZ",    # naive datetimes needed to test tz validation
 ]
 
 [tool.ruff.lint.isort]
@@ -156,8 +157,15 @@ convention = "google"
 [tool.ruff.lint.mccabe]
 max-complexity = 15
 
-[tool.ty]
+[tool.ty.environment]
 python-version = "3.13"
+
+[tool.ty.rules]
+missing-argument = "ignore"      # Pydantic model_post_init / validators
+unknown-argument = "ignore"      # pydantic-settings underscore kwargs
+no-matching-overload = "ignore"  # dict.get in model validators
+invalid-assignment = "ignore"    # dict mutations in model validators
+invalid-return-type = "ignore"   # model validator return types
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

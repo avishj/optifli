@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-"""Unit tests for DepartureWindow model."""
+"""Unit tests for DepartureWindow and ArrivalCutoff models."""
 
 from datetime import UTC, datetime
 from zoneinfo import ZoneInfo
@@ -10,7 +10,7 @@ from zoneinfo import ZoneInfo
 import pytest
 from pydantic import ValidationError
 
-from optifli.models.window import DepartureWindow
+from optifli.models.window import ArrivalCutoff, DepartureWindow
 
 pytestmark = pytest.mark.unit
 
@@ -54,7 +54,7 @@ class TestDepartureWindowInvalid:
     def test_naive_start(self):
         with pytest.raises(ValidationError, match="timezone-aware"):
             DepartureWindow(
-                start=datetime(2026, 7, 16, 19, 0),  # noqa: DTZ001
+                start=datetime(2026, 7, 16, 19, 0),
                 end=datetime(2026, 7, 17, 11, 0, tzinfo=UTC),
             )
 
@@ -62,7 +62,7 @@ class TestDepartureWindowInvalid:
         with pytest.raises(ValidationError, match="timezone-aware"):
             DepartureWindow(
                 start=datetime(2026, 7, 16, 19, 0, tzinfo=UTC),
-                end=datetime(2026, 7, 17, 11, 0),  # noqa: DTZ001
+                end=datetime(2026, 7, 17, 11, 0),
             )
 
     def test_end_equals_start(self):
@@ -88,3 +88,28 @@ class TestDepartureWindowInvalid:
             DepartureWindow(
                 start=datetime(2026, 7, 16, 19, 0, tzinfo=UTC),
             )
+
+
+class TestArrivalCutoffValid:
+    def test_utc(self):
+        c = ArrivalCutoff(deadline=datetime(2026, 7, 17, 14, 0, tzinfo=UTC))
+        assert c.deadline.tzinfo is not None
+
+    def test_iana_timezone(self):
+        tz = ZoneInfo("Asia/Kolkata")
+        c = ArrivalCutoff(deadline=datetime(2026, 7, 17, 14, 0, tzinfo=tz))
+        assert c.deadline.tzinfo is not None
+
+    def test_from_iso_string(self):
+        c = ArrivalCutoff.model_validate({"deadline": "2026-07-17T14:00:00+05:30"})
+        assert c.deadline.tzinfo is not None
+
+
+class TestArrivalCutoffInvalid:
+    def test_naive_datetime(self):
+        with pytest.raises(ValidationError, match="timezone-aware"):
+            ArrivalCutoff(deadline=datetime(2026, 7, 17, 14, 0))
+
+    def test_missing_deadline(self):
+        with pytest.raises(ValidationError):
+            ArrivalCutoff()

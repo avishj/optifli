@@ -38,3 +38,14 @@ class DepartureWindow(BaseModel, frozen=True):
             msg = "'start' must be before 'end'"
             raise ValueError(msg)
         return self
+
+
+class ArrivalCutoff(BaseModel, frozen=True):
+    """A TZ-aware upper-bound datetime for arrival."""
+
+    deadline: datetime
+
+    @model_validator(mode="after")
+    def _validate_tz(self) -> Self:
+        _require_tz_aware(self.deadline, "deadline")
+        return self
