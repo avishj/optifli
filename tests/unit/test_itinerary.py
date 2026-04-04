@@ -39,6 +39,26 @@ class TestDirectionMode:
             DirectionMode("diagonal")
 
 
+class TestDirectionModeInItinerary:
+    def test_uppercase_direction_in_model(self):
+        it = Itinerary(
+            origin=_DELHI,
+            destinations=[_dest(_HANOI)],
+            return_city=_DELHI,
+            direction="FORWARD",
+        )
+        assert it.direction is DirectionMode.FORWARD
+
+    def test_mixed_case_direction_in_model(self):
+        it = Itinerary(
+            origin=_DELHI,
+            destinations=[_dest(_HANOI)],
+            return_city=_DELHI,
+            direction="Both",
+        )
+        assert it.direction is DirectionMode.BOTH
+
+
 class TestRouteMode:
     def test_values(self):
         assert RouteMode.FIXED == "fixed"
@@ -55,6 +75,17 @@ class TestRouteMode:
     def test_invalid_value(self):
         with pytest.raises(ValueError, match="not a valid"):
             RouteMode("shuffle")
+
+
+class TestRouteModeInItinerary:
+    def test_uppercase_route_mode_in_model(self):
+        it = Itinerary(
+            origin=_DELHI,
+            destinations=[_dest(_HANOI)],
+            return_city=_DELHI,
+            route_mode="REORDER",
+        )
+        assert it.route_mode is RouteMode.REORDER
 
 
 class TestDestinationValid:

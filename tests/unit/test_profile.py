@@ -41,6 +41,11 @@ class TestLoadProfileValid:
         assert it.legs[0].origin.airports == ["DEL"]
         assert it.legs[0].destination.airports == ["HAN"]
 
+    def test_uppercase_enums(self):
+        it = load_profile(_FIXTURES / "uppercase_enums.json")
+        assert it.direction is DirectionMode.BOTH
+        assert it.route_mode is RouteMode.REORDER
+
 
 class TestLoadProfileFileErrors:
     def test_file_not_found(self):
