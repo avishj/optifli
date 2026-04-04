@@ -31,7 +31,8 @@ class ProfileError(Exception):
 def _remap_city(data: dict[str, Any]) -> dict[str, Any]:
     """Remap ``include`` key to ``airports`` for CityGroup compatibility."""
     if "include" in data and "airports" not in data:
-        data = {**data, "airports": data.pop("include")}
+        airports = data.pop("include")
+        data = {**data, "airports": airports}
     return data
 
 
