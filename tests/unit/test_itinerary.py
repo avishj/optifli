@@ -39,6 +39,26 @@ class TestDirectionMode:
             DirectionMode("diagonal")
 
 
+class TestDirectionModeDirectConstruction:
+    def test_uppercase_raises(self):
+        with pytest.raises(ValueError, match="not a valid"):
+            DirectionMode("FORWARD")
+
+    def test_mixed_case_raises(self):
+        with pytest.raises(ValueError, match="not a valid"):
+            DirectionMode("Both")
+
+
+class TestRouteModeDirectConstruction:
+    def test_uppercase_raises(self):
+        with pytest.raises(ValueError, match="not a valid"):
+            RouteMode("FIXED")
+
+    def test_mixed_case_raises(self):
+        with pytest.raises(ValueError, match="not a valid"):
+            RouteMode("Reorder")
+
+
 class TestDirectionModeInItinerary:
     def test_uppercase_direction_in_model(self):
         it = Itinerary(
