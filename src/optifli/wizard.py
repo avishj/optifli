@@ -181,6 +181,15 @@ def _collect() -> Itinerary:
     direction = _prompt_direction_mode()
     route_mode = _prompt_route_mode()
 
+    if route_mode is RouteMode.REORDER and legs:
+        if Confirm.ask(
+            "Reorder mode is incompatible with explicit legs. Drop legs?",
+            default=False,
+        ):
+            legs = []
+        else:
+            route_mode = RouteMode.FIXED
+
     return Itinerary(
         origin=origin,
         destinations=destinations,
