@@ -19,10 +19,18 @@ def _patch_prompts(monkeypatch, prompt_answers, confirm_answers):
 
     def fake_prompt_ask(prompt, **_kwargs):
         prompt_calls.append(prompt)
-        return next(prompt_iter)
+        try:
+            return next(prompt_iter)
+        except StopIteration:
+            msg = f"no more prompt answers ({prompt!r})"
+            raise AssertionError(msg) from None
 
     def fake_confirm_ask(_prompt, **_kwargs):
-        return next(confirm_iter)
+        try:
+            return next(confirm_iter)
+        except StopIteration:
+            msg = f"no more confirm answers ({_prompt!r})"
+            raise AssertionError(msg) from None
 
     monkeypatch.setattr("optifli.wizard.Prompt.ask", fake_prompt_ask)
     monkeypatch.setattr("optifli.wizard.Confirm.ask", fake_confirm_ask)
