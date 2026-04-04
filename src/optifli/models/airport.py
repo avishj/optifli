@@ -49,7 +49,11 @@ class CityGroup(BaseModel, frozen=True):
     airports: list[IATACode]
 
     @model_validator(mode="after")
-    def _validate_airports(self) -> Self:
+    def _validate_fields(self) -> Self:
+        if not self.name.strip():
+            msg = "'name' must not be empty"
+            raise ValueError(msg)
+
         if not self.airports:
             msg = "'airports' must contain at least one airport code"
             raise ValueError(msg)
