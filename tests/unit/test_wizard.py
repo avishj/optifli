@@ -94,6 +94,26 @@ class TestCollectItineraryValid:
         assert prompt_calls.count("Leg 2 departure start (HAN -> DEL)") == 1
 
 
+class TestCollectItineraryAbort:
+    def test_ctrl_c_exits_cleanly(self, monkeypatch, capsys):
+        monkeypatch.setattr(
+            "optifli.wizard.Prompt.ask",
+            lambda *a, **kw: (_ for _ in ()).throw(KeyboardInterrupt),
+        )
+        with pytest.raises(SystemExit, match="130"):
+            collect_itinerary()
+        assert "Aborted" in capsys.readouterr().err
+
+    def test_eof_exits_cleanly(self, monkeypatch, capsys):
+        monkeypatch.setattr(
+            "optifli.wizard.Prompt.ask",
+            lambda *a, **kw: (_ for _ in ()).throw(EOFError),
+        )
+        with pytest.raises(SystemExit, match="130"):
+            collect_itinerary()
+        assert "Aborted" in capsys.readouterr().err
+
+
 class TestCollectItineraryValidation:
     def test_reprompts_after_invalid_input(self, monkeypatch, capsys):
         prompt_calls = _patch_prompts(
