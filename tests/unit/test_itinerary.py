@@ -30,9 +30,10 @@ class TestDirectionMode:
         assert DirectionMode.FORWARD == "forward"
         assert isinstance(DirectionMode.FORWARD, str)
 
-    def test_case_insensitive_lookup(self):
+    def test_canonical_value_lookup(self):
         assert DirectionMode("forward") is DirectionMode.FORWARD
-        assert DirectionMode("FORWARD".lower()) is DirectionMode.FORWARD
+        assert DirectionMode("reverse") is DirectionMode.REVERSE
+        assert DirectionMode("both") is DirectionMode.BOTH
 
     def test_invalid_value(self):
         with pytest.raises(ValueError, match="not a valid"):
@@ -88,9 +89,9 @@ class TestRouteMode:
         assert RouteMode.FIXED == "fixed"
         assert isinstance(RouteMode.FIXED, str)
 
-    def test_case_insensitive_lookup(self):
+    def test_canonical_value_lookup(self):
         assert RouteMode("fixed") is RouteMode.FIXED
-        assert RouteMode("FIXED".lower()) is RouteMode.FIXED
+        assert RouteMode("reorder") is RouteMode.REORDER
 
     def test_invalid_value(self):
         with pytest.raises(ValueError, match="not a valid"):
