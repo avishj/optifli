@@ -12,7 +12,7 @@ from pydantic import BaseModel, model_validator
 
 def _require_tz_aware(dt: datetime, field: str) -> None:
     """Raise if *dt* is a naive datetime."""
-    if dt.tzinfo is None:
+    if dt.tzinfo is None or dt.utcoffset() is None:
         msg = (
             f"'{field}' must be timezone-aware "
             "(e.g. '2026-07-16T19:00:00+05:30' or '2026-07-16T19:00:00Z')"
