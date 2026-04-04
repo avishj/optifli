@@ -10,6 +10,7 @@ from typing import Annotated
 
 from cyclopts import App, Parameter
 from rich.console import Console
+from rich.markup import escape
 from rich.table import Table
 
 from optifli import __version__
@@ -132,7 +133,7 @@ def optimize(
         try:
             itinerary = load_profile(profile)
         except ProfileError as exc:
-            console.print(f"[red]Error:[/red] {exc}")
+            console.print(f"[red]Error:[/red] {escape(str(exc))}")
             return ExitCode.USAGE
 
     logger.debug("loaded itinerary with %d destinations", len(itinerary.destinations))
