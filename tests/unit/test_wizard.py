@@ -126,9 +126,7 @@ class TestCollectItineraryValidation:
                 "2d",
                 "12a",
                 "del",
-                "sideways",
                 "forward",
-                "shuffle",
                 "fixed",
             ],
             confirm_answers=[False, False],
@@ -144,12 +142,8 @@ class TestCollectItineraryValidation:
         assert prompt_calls.count("Origin airport code") == 2
         assert prompt_calls.count("Destination 1 stay duration") == 2
         assert prompt_calls.count("Return airport code") == 2
-        assert prompt_calls.count("Direction mode") == 2
-        assert prompt_calls.count("Route mode") == 2
         assert "not a valid IATA code" in captured.err
         assert "Invalid duration format" in captured.err
-        assert "not a valid direction mode" in captured.err
-        assert "not a valid route mode" in captured.err
 
     def test_reprompts_after_invalid_datetime(self, monkeypatch, capsys):
         prompt_calls = _patch_prompts(

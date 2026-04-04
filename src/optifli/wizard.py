@@ -70,41 +70,23 @@ def _prompt_duration(prompt_text: str) -> Duration:
 def _prompt_direction_mode() -> DirectionMode:
     """Prompt until a valid direction mode is selected."""
     choices = [mode.value for mode in DirectionMode]
-    while True:
-        value = Prompt.ask(
-            "Direction mode",
-            choices=choices,
-            default=DirectionMode.FORWARD.value,
-        )
-        value = value.strip().lower()
-        try:
-            return DirectionMode(value)
-        except ValueError:
-            _print_error(
-                field="Direction mode",
-                reason=f"'{value}' is not a valid direction mode",
-                hint="Choose forward, reverse, or both",
-            )
+    value = Prompt.ask(
+        "Direction mode",
+        choices=choices,
+        default=DirectionMode.FORWARD.value,
+    )
+    return DirectionMode(value)
 
 
 def _prompt_route_mode() -> RouteMode:
     """Prompt until a valid route mode is selected."""
     choices = [mode.value for mode in RouteMode]
-    while True:
-        value = Prompt.ask(
-            "Route mode",
-            choices=choices,
-            default=RouteMode.FIXED.value,
-        )
-        value = value.strip().lower()
-        try:
-            return RouteMode(value)
-        except ValueError:
-            _print_error(
-                field="Route mode",
-                reason=f"'{value}' is not a valid route mode",
-                hint="Choose fixed or reorder",
-            )
+    value = Prompt.ask(
+        "Route mode",
+        choices=choices,
+        default=RouteMode.FIXED.value,
+    )
+    return RouteMode(value)
 
 
 def _prompt_destination(index: int) -> Destination:
