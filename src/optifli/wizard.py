@@ -179,11 +179,8 @@ def _prompt_legs(
     return legs
 
 
-def collect_itinerary() -> Itinerary:
-    """Collect a basic itinerary interactively.
-
-    The wizard currently models each prompted airport as a single-airport city group.
-    """
+def _collect() -> Itinerary:
+    """Run the interactive collection flow (no interrupt handling)."""
     origin = _prompt_city("Origin airport code")
     destinations = [_prompt_destination(1)]
 
@@ -208,3 +205,18 @@ def collect_itinerary() -> Itinerary:
         route_mode=route_mode,
         legs=legs,
     )
+
+
+def collect_itinerary() -> Itinerary:
+    """Collect a basic itinerary interactively.
+
+    The wizard currently models each prompted airport as a single-airport city group.
+
+    Raises:
+        SystemExit: On EOF (Ctrl+D) or keyboard interrupt (Ctrl+C).
+    """
+    try:
+        return _collect()
+    except (KeyboardInterrupt, EOFError):
+        _error_console.print("\n[dim]Aborted.[/dim]")
+        raise SystemExit(130) from None
