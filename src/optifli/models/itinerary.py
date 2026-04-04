@@ -68,7 +68,7 @@ class Leg(BaseModel, frozen=True):
     arrival_cutoff: ArrivalCutoff | None = None
 
 
-_MAX_DESTINATIONS = 10
+MAX_DESTINATIONS = 10
 
 
 class Itinerary(BaseModel, frozen=True):
@@ -98,10 +98,10 @@ class Itinerary(BaseModel, frozen=True):
         if count < 1:
             msg = "'destinations' must contain at least one destination"
             raise ValueError(msg)
-        if count > _MAX_DESTINATIONS:
+        if count > MAX_DESTINATIONS:
             msg = (
                 f"'destinations' must contain at most "
-                f"{_MAX_DESTINATIONS} destinations, got {count}"
+                f"{MAX_DESTINATIONS} destinations, got {count}"
             )
             raise ValueError(msg)
         return self

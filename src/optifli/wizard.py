@@ -14,6 +14,7 @@ from optifli.errors import InputError, format_errors, from_pydantic
 from optifli.models.airport import CityGroup
 from optifli.models.duration import Duration
 from optifli.models.itinerary import (
+    MAX_DESTINATIONS,
     Destination,
     DirectionMode,
     Itinerary,
@@ -22,7 +23,6 @@ from optifli.models.itinerary import (
 )
 from optifli.models.window import ArrivalCutoff, DepartureWindow
 
-_MAX_DESTINATIONS = 10
 _WINDOW_HINT = "Use timezone-aware ISO datetimes and keep end after start"
 _CUTOFF_HINT = "Use an ISO 8601 datetime with timezone, e.g. 2026-07-16T19:00:00+05:30"
 _error_console = Console(stderr=True)
@@ -168,7 +168,7 @@ def _collect() -> Itinerary:
     origin = _prompt_city("Origin airport code")
     destinations = [_prompt_destination(1)]
 
-    while len(destinations) < _MAX_DESTINATIONS and Confirm.ask(
+    while len(destinations) < MAX_DESTINATIONS and Confirm.ask(
         "Add another destination?",
         default=False,
     ):
