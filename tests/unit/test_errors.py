@@ -68,20 +68,19 @@ class TestFormatErrors:
 
 class TestFromPydantic:
     def test_converts_validation_error(self):
-        try:
+        with pytest.raises(ValidationError) as exc_info:
             Itinerary(
                 origin={"name": "Delhi", "airports": ["DEL"]},
                 destinations=[],
                 return_city={"name": "Delhi", "airports": ["DEL"]},
             )
-        except ValidationError as exc:
-            errors = from_pydantic(exc)
 
+        errors = from_pydantic(exc_info.value)
         assert len(errors) >= 1
         assert any("at least one" in e.reason for e in errors)
 
     def test_nested_error_includes_path(self):
-        try:
+        with pytest.raises(ValidationError) as exc_info:
             Itinerary(
                 origin={"name": "Delhi", "airports": ["DEL"]},
                 destinations=[
@@ -89,8 +88,7 @@ class TestFromPydantic:
                 ],
                 return_city={"name": "Delhi", "airports": ["DEL"]},
             )
-        except ValidationError as exc:
-            errors = from_pydantic(exc)
 
+        errors = from_pydantic(exc_info.value)
         assert len(errors) >= 1
         assert any("destinations" in e.field for e in errors)
