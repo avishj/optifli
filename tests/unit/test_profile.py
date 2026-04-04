@@ -14,12 +14,10 @@ from optifli.profile import ProfileError, load_profile
 
 pytestmark = pytest.mark.unit
 
-_FIXTURES = Path(__file__).resolve().parent.parent / "fixtures" / "profiles"
-
 
 class TestLoadProfileValid:
-    def test_minimal(self):
-        it = load_profile(_FIXTURES / "minimal.json")
+    def test_minimal(self, profiles_dir):
+        it = load_profile(profiles_dir / "minimal.json")
         assert it.origin.name == "Delhi"
         assert it.origin.airports == ["DEL"]
         assert len(it.destinations) == 1
@@ -30,8 +28,8 @@ class TestLoadProfileValid:
         assert it.route_mode is RouteMode.FIXED
         assert it.legs == []
 
-    def test_full(self):
-        it = load_profile(_FIXTURES / "full.json")
+    def test_full(self, profiles_dir):
+        it = load_profile(profiles_dir / "full.json")
         assert len(it.destinations) == 2
         assert it.destinations[1].city.name == "Da Nang"
         assert it.destinations[1].stay.total_days == 1.5
@@ -41,8 +39,8 @@ class TestLoadProfileValid:
         assert it.legs[0].origin.airports == ["DEL"]
         assert it.legs[0].destination.airports == ["HAN"]
 
-    def test_uppercase_enums(self):
-        it = load_profile(_FIXTURES / "uppercase_enums.json")
+    def test_uppercase_enums(self, profiles_dir):
+        it = load_profile(profiles_dir / "uppercase_enums.json")
         assert it.direction is DirectionMode.BOTH
         assert it.route_mode is RouteMode.REORDER
 
