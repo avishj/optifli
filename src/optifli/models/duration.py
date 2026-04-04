@@ -32,7 +32,7 @@ class Duration(BaseModel, frozen=True):
             data = {"raw": data}
         if not isinstance(data, dict):
             msg = "Expected a duration string like '2d' or '12h'"
-            raise TypeError(msg)
+            raise ValueError(msg)  # noqa: TRY004 - Pydantic v2 requires ValueError
         raw = data.get("raw", "")
         if not isinstance(raw, str) or not raw.strip():
             msg = "Duration cannot be empty"
