@@ -14,9 +14,12 @@ from optifli.models.itinerary import (
     RouteMode,
 )
 from optifli.models.remap import apply_overrides, remap_for_reverse
+from optifli.models.window import ArrivalCutoff, DepartureWindow
 
 __all__ = [
+    "ArrivalCutoff",
     "CityGroup",
+    "DepartureWindow",
     "Destination",
     "DirectionMode",
     "Duration",
