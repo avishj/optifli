@@ -37,6 +37,8 @@ class TestReverseCliDisplay:
         assert result.exit_code == ExitCode.OK
         assert "Reverse Duration Map" in result.output
         section = result.output.split("Reverse Duration Map", maxsplit=1)[1]
+        assert "Da Nang (DAD) - 1.5d" in section
+        assert "Hanoi (HAN) - 2d" in section
         assert section.find("Da Nang (DAD) - 1.5d") < section.find("Hanoi (HAN) - 2d")
 
     def test_both_shows_direction_comparison(self, invoke, tmp_path):
