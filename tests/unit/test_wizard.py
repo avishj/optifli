@@ -100,8 +100,9 @@ class TestCollectItineraryAbort:
             "optifli.wizard.Prompt.ask",
             lambda *a, **kw: (_ for _ in ()).throw(KeyboardInterrupt),
         )
-        with pytest.raises(SystemExit, match="130"):
+        with pytest.raises(SystemExit) as exc:
             collect_itinerary()
+        assert exc.value.code == 130
         assert "Aborted" in capsys.readouterr().err
 
     def test_eof_exits_cleanly(self, monkeypatch, capsys):
@@ -109,8 +110,9 @@ class TestCollectItineraryAbort:
             "optifli.wizard.Prompt.ask",
             lambda *a, **kw: (_ for _ in ()).throw(EOFError),
         )
-        with pytest.raises(SystemExit, match="130"):
+        with pytest.raises(SystemExit) as exc:
             collect_itinerary()
+        assert exc.value.code == 130
         assert "Aborted" in capsys.readouterr().err
 
 
