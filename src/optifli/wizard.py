@@ -38,9 +38,11 @@ def _prompt_city(prompt_text: str) -> CityGroup:
     """Prompt until a single-airport city group validates."""
     while True:
         code = Prompt.ask(prompt_text)
-        name = code.strip().upper()
+        normalized = code.strip().upper()
         try:
-            return CityGroup.model_validate({"name": name, "airports": [code]})
+            return CityGroup.model_validate(
+                {"name": normalized, "airports": [normalized]}
+            )
         except ValidationError as exc:
             reason = from_pydantic(exc)[0].reason
             _print_error(
