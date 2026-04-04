@@ -5,9 +5,9 @@
 """Itinerary domain models."""
 
 from enum import StrEnum
-from typing import Self
+from typing import Annotated, Self
 
-from pydantic import BaseModel, model_validator
+from pydantic import BaseModel, BeforeValidator, model_validator
 
 from optifli.models.airport import CityGroup
 from optifli.models.duration import Duration
@@ -86,8 +86,10 @@ class Itinerary(BaseModel, frozen=True):
     origin: CityGroup
     destinations: list[Destination]
     return_city: CityGroup
-    direction: DirectionMode = DirectionMode.FORWARD
-    route_mode: RouteMode = RouteMode.FIXED
+    direction: Annotated[DirectionMode, BeforeValidator(str.lower)] = (
+        DirectionMode.FORWARD
+    )
+    route_mode: Annotated[RouteMode, BeforeValidator(str.lower)] = RouteMode.FIXED
     legs: list[Leg] = []
 
     @model_validator(mode="after")
