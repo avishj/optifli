@@ -165,6 +165,28 @@ class TestCollectItineraryReorderConflict:
         assert itinerary.legs[1].origin.airports == ["HAN"]
         assert itinerary.legs[1].destination.airports == ["DEL"]
 
+    def test_reorder_without_legs_skips_conflict_prompt(self, monkeypatch):
+        _patch_prompts(
+            monkeypatch,
+            prompt_answers=[
+                "del",
+                "han",
+                "2d",
+                "del",
+                "forward",
+                "reorder",
+            ],
+            confirm_answers=[
+                False,  # no more destinations
+                False,  # no departure windows — so no legs
+            ],
+        )
+
+        itinerary = collect_itinerary()
+
+        assert itinerary.route_mode is RouteMode.REORDER
+        assert itinerary.legs == []
+
 
 class TestCollectItineraryAbort:
     def test_ctrl_c_exits_cleanly(self, monkeypatch, capsys):
