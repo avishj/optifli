@@ -19,6 +19,14 @@ from optifli.models.itinerary import (
 
 pytestmark = pytest.mark.unit
 
+_DELHI = {"name": "Delhi", "airports": ["DEL"]}
+_HANOI = {"name": "Hanoi", "airports": ["HAN"]}
+_DANANG = {"name": "Da Nang", "airports": ["DAD"]}
+
+
+def _dest(city: dict, stay: str = "2d"):
+    return {"city": city, "stay": stay}
+
 
 class TestDirectionMode:
     def test_values(self):
@@ -240,15 +248,6 @@ class TestLegNestedValidation:
                     "end": datetime(2026, 7, 16, 19, 0, tzinfo=UTC),
                 },
             )
-
-
-_DELHI = {"name": "Delhi", "airports": ["DEL"]}
-_HANOI = {"name": "Hanoi", "airports": ["HAN"]}
-_DANANG = {"name": "Da Nang", "airports": ["DAD"]}
-
-
-def _dest(city: dict, stay: str = "2d"):
-    return {"city": city, "stay": stay}
 
 
 class TestItineraryValid:
