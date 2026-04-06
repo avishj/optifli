@@ -102,6 +102,37 @@ class TestCollectItineraryValid:
         assert prompt_calls.count("Leg 2 departure start (HAN -> DEL)") == 1
 
 
+class TestCollectItineraryReorderConflict:
+    def test_reorder_drops_legs_on_confirm(self, monkeypatch):
+        _patch_prompts(
+            monkeypatch,
+            prompt_answers=[
+                "del",
+                "han",
+                "2d",
+                "del",
+                "2026-07-16T19:00:00+05:30",
+                "2026-07-16T23:00:00+05:30",
+                "2026-07-18T09:00:00+05:30",
+                "2026-07-18T18:00:00+05:30",
+                "forward",
+                "reorder",
+            ],
+            confirm_answers=[
+                False,  # no more destinations
+                True,  # add departure windows
+                False,  # no arrival cutoff leg 1
+                False,  # no arrival cutoff leg 2
+                True,  # drop legs? yes
+            ],
+        )
+
+        itinerary = collect_itinerary()
+
+        assert itinerary.route_mode is RouteMode.REORDER
+        assert itinerary.legs == []
+
+
 class TestCollectItineraryAbort:
     def test_ctrl_c_exits_cleanly(self, monkeypatch, capsys):
         monkeypatch.setattr(
