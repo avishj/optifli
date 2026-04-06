@@ -132,6 +132,39 @@ class TestCollectItineraryReorderConflict:
         assert itinerary.route_mode is RouteMode.REORDER
         assert itinerary.legs == []
 
+    def test_reorder_fallback_keeps_legs_on_decline(self, monkeypatch):
+        _patch_prompts(
+            monkeypatch,
+            prompt_answers=[
+                "del",
+                "han",
+                "2d",
+                "del",
+                "2026-07-16T19:00:00+05:30",
+                "2026-07-16T23:00:00+05:30",
+                "2026-07-18T09:00:00+05:30",
+                "2026-07-18T18:00:00+05:30",
+                "forward",
+                "reorder",
+            ],
+            confirm_answers=[
+                False,  # no more destinations
+                True,  # add departure windows
+                False,  # no arrival cutoff leg 1
+                False,  # no arrival cutoff leg 2
+                False,  # drop legs? no — fall back to fixed
+            ],
+        )
+
+        itinerary = collect_itinerary()
+
+        assert itinerary.route_mode is RouteMode.FIXED
+        assert len(itinerary.legs) == 2
+        assert itinerary.legs[0].origin.airports == ["DEL"]
+        assert itinerary.legs[0].destination.airports == ["HAN"]
+        assert itinerary.legs[1].origin.airports == ["HAN"]
+        assert itinerary.legs[1].destination.airports == ["DEL"]
+
 
 class TestCollectItineraryAbort:
     def test_ctrl_c_exits_cleanly(self, monkeypatch, capsys):
