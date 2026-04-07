@@ -30,7 +30,7 @@ dependencies = [
     "cyclopts>=4.10.1",
     "rich>=14.3.3",
     "pydantic-settings>=2.13.1",
-    "flights>=0.8.2",
+    "flights>=0.8.4",
 ]
 
 [project.urls]
@@ -55,7 +55,7 @@ dev = [
     "pytest-xdist>=3.8.0",
     "pytest-mock>=3.15.1",
     "pytest-github-actions-annotate-failures>=0.4.0",
-    "zensical>=0.0.31",
+    "zensical>=0.0.32",
     "mkdocstrings-python>=2.0.3",
     "commitizen>=4.13.9",
     "complexipy>=5.2.0",
