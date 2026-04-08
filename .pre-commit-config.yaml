@@ -19,6 +19,7 @@ repos:
       - id: check-yaml
         args: [--allow-multiple-documents]
       - id: check-json
+        exclude: tests/fixtures/profiles/malformed\.json
       - id: check-symlinks
       - id: check-illegal-windows-names
       - id: check-vcs-permalinks

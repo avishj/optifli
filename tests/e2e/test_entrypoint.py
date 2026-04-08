@@ -55,6 +55,27 @@ def test_optimize_missing_profile():
     assert "not found" in result.stderr.lower()
 
 
+def test_verbose_flag(profiles_dir):
+    result = _run(
+        "--verbose", "optimize", "--profile", str(profiles_dir / "minimal.json")
+    )
+    assert result.returncode == 0
+    assert "Delhi" in result.stdout
+
+
+def test_optimize_reverse_profile(profiles_dir):
+    result = _run("optimize", "--profile", str(profiles_dir / "reverse.json"))
+    assert result.returncode == 0
+    assert "Reverse" in result.stdout
+    assert "Da Nang" in result.stdout
+    assert "Hanoi" in result.stdout
+
+
+def test_optimize_malformed_profile(profiles_dir):
+    result = _run("optimize", "--profile", str(profiles_dir / "malformed.json"))
+    assert result.returncode != 0
+
+
 def test_invalid_command():
     result = _run("nonexistent")
     assert result.returncode != 0
