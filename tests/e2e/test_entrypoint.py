@@ -82,6 +82,18 @@ def test_optimize_malformed_profile(profiles_dir):
     assert result.returncode != 0
 
 
+def test_invalid_env_config():
+    result = subprocess.run(
+        ["optifli", "--help"],
+        capture_output=True,
+        text=True,
+        check=False,
+        env={**__import__("os").environ, "OPTIFLI_LOG_FORMAT": "garbage"},
+    )
+    assert result.returncode != 0
+    assert "configuration" in result.stderr.lower()
+
+
 def test_invalid_command():
     result = _run("nonexistent")
     assert result.returncode != 0
