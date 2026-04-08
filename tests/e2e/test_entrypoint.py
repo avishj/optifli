@@ -49,6 +49,12 @@ def test_no_args_shows_help():
     assert "Usage" in result.stdout or "optifli" in result.stdout
 
 
+def test_optimize_missing_profile():
+    result = _run("optimize", "--profile", "nonexistent.json")
+    assert result.returncode != 0
+    assert "not found" in result.stderr.lower()
+
+
 def test_invalid_command():
     result = _run("nonexistent")
     assert result.returncode != 0
