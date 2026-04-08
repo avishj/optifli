@@ -138,6 +138,7 @@ jobs:
           shellcheck: true
           pyflakes: true
           flags: "-color"
+          working-directory: ${{ runner.temp }}
 
       - name: Run hadolint
         if: '!cancelled()'
