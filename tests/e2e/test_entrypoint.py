@@ -71,6 +71,12 @@ def test_optimize_reverse_profile(profiles_dir):
     assert "Hanoi" in result.stdout
 
 
+def test_optimize_invalid_data_profile(profiles_dir):
+    result = _run("optimize", "--profile", str(profiles_dir / "invalid_data.json"))
+    assert result.returncode != 0
+    assert "error" in result.stderr.lower()
+
+
 def test_optimize_malformed_profile(profiles_dir):
     result = _run("optimize", "--profile", str(profiles_dir / "malformed.json"))
     assert result.returncode != 0
