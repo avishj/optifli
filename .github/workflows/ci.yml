@@ -163,6 +163,7 @@ jobs:
         with:
           fail: true
           jobSummary: true
+          output: ${{ runner.temp }}/lychee/out.md
 
       - name: REUSE lint
         if: '!cancelled()'
