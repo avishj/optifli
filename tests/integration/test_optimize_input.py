@@ -23,8 +23,22 @@ class TestOptimizeValidProfile:
     def test_full_profile(self, invoke, profiles_dir):
         result = invoke("optimize", "--profile", str(profiles_dir / "full.json"))
         assert result.exit_code == ExitCode.OK
+
+        assert "Delhi" in result.output
+        assert "Hanoi" in result.output
         assert "Da Nang" in result.output
+        assert "2d" in result.output
+        assert "1.5d" in result.output
         assert "both" in result.output
+        assert "fixed" in result.output
+        assert "Legs" in result.output
+        assert "1" in result.output  # single leg from profile
+
+        # Direction "both" triggers the comparison table
+        assert "Direction Comparison" in result.output
+        comparison = result.output.split("Direction Comparison", maxsplit=1)[1]
+        assert "Forward" in comparison
+        assert "Reverse" in comparison
 
 
 class TestOptimizeInvalidProfile:
