@@ -31,12 +31,16 @@ class TestOptimizeInvalidProfile:
     def test_missing_profile(self, invoke):
         result = invoke("optimize", "--profile", "/nonexistent/profile.json")
         assert result.exit_code == ExitCode.USAGE
+        assert "Error:" in result.errors
+        assert "Profile not found" in result.errors
 
     def test_invalid_json(self, invoke, tmp_path):
         bad = tmp_path / "bad.json"
         bad.write_text("{broken", encoding="utf-8")
         result = invoke("optimize", "--profile", str(bad))
         assert result.exit_code == ExitCode.USAGE
+        assert "Error:" in result.errors
+        assert "Invalid JSON" in result.errors
 
     def test_validation_errors(self, invoke, tmp_path):
         data = {
@@ -50,6 +54,9 @@ class TestOptimizeInvalidProfile:
         p.write_text(json.dumps(data), encoding="utf-8")
         result = invoke("optimize", "--profile", str(p))
         assert result.exit_code == ExitCode.USAGE
+        assert "Error:" in result.errors
+        assert "validation failed" in result.errors
+        assert "ZZZ" in result.errors
 
 
 def _patch_prompts(monkeypatch, prompt_answers, confirm_answers):
