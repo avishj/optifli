@@ -33,6 +33,16 @@ def test_optimize_profile(profiles_dir):
     assert "Hanoi" in result.stdout
 
 
+def test_optimize_full_profile(profiles_dir):
+    result = _run("optimize", "--profile", str(profiles_dir / "full.json"))
+    assert result.returncode == 0
+    assert "Delhi" in result.stdout
+    assert "Hanoi" in result.stdout
+    assert "Da Nang" in result.stdout
+    assert "Forward" in result.stdout
+    assert "Reverse" in result.stdout
+
+
 def test_no_args_shows_help():
     result = _run()
     assert result.returncode == 0
