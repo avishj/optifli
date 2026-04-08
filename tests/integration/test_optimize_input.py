@@ -9,7 +9,6 @@ import json
 import pytest
 
 from optifli.exit_codes import ExitCode
-from optifli.models.itinerary import Itinerary
 
 pytestmark = pytest.mark.integration
 
@@ -53,21 +52,137 @@ class TestOptimizeInvalidProfile:
         assert result.exit_code == ExitCode.USAGE
 
 
-class TestOptimizeNoProfile:
-    def test_runs_wizard(self, invoke, monkeypatch):
-        monkeypatch.setattr(
-            "optifli.cli.collect_itinerary",
-            lambda: Itinerary(
-                origin={"name": "DEL", "airports": ["DEL"]},
-                destinations=[
-                    {
-                        "city": {"name": "HAN", "airports": ["HAN"]},
-                        "stay": "2d",
-                    },
-                ],
-                return_city={"name": "DEL", "airports": ["DEL"]},
-            ),
+def _patch_prompts(monkeypatch, prompt_answers, confirm_answers):
+    """Patch the wizard I/O boundary so the full pipeline runs without a TTY."""
+    prompt_iter = iter(prompt_answers)
+    confirm_iter = iter(confirm_answers)
+
+    def fake_prompt_ask(prompt, **_kwargs):
+        try:
+            return next(prompt_iter)
+        except StopIteration:
+            msg = f"no more prompt answers ({prompt!r})"
+            raise AssertionError(msg) from None
+
+    def fake_confirm_ask(_prompt, **_kwargs):
+        try:
+            return next(confirm_iter)
+        except StopIteration:
+            msg = f"no more confirm answers ({_prompt!r})"
+            raise AssertionError(msg) from None
+
+    monkeypatch.setattr("optifli.wizard.Prompt.ask", fake_prompt_ask)
+    monkeypatch.setattr("optifli.wizard.Confirm.ask", fake_confirm_ask)
+
+
+class TestOptimizeWizard:
+    def test_single_destination_renders_itinerary(self, invoke, monkeypatch):
+        _patch_prompts(
+            monkeypatch,
+            prompt_answers=["del", "han", "2d", "del", "forward", "fixed"],
+            confirm_answers=[False, False],
         )
+
         result = invoke("optimize")
+
         assert result.exit_code == ExitCode.OK
         assert "DEL" in result.output
+        assert "HAN" in result.output
+        assert "2d" in result.output
+        assert "forward" in result.output
+        assert "fixed" in result.output
+
+    def test_multi_destination_renders_all_cities(self, invoke, monkeypatch):
+        _patch_prompts(
+            monkeypatch,
+            prompt_answers=[
+                "del",
+                "han",
+                "2d",
+                "dad",
+                "1.5d",
+                "del",
+                "forward",
+                "fixed",
+            ],
+            confirm_answers=[True, False, False],
+        )
+
+        result = invoke("optimize")
+
+        assert result.exit_code == ExitCode.OK
+        assert "HAN" in result.output
+        assert "DAD" in result.output
+        assert "2d" in result.output
+        assert "1.5d" in result.output
+
+    def test_with_departure_windows_renders_leg_count(self, invoke, monkeypatch):
+        _patch_prompts(
+            monkeypatch,
+            prompt_answers=[
+                "del",
+                "han",
+                "2d",
+                "del",
+                "2026-07-16T19:00:00+05:30",
+                "2026-07-16T23:00:00+05:30",
+                "2026-07-18T09:00:00+05:30",
+                "2026-07-18T18:00:00+05:30",
+                "forward",
+                "fixed",
+            ],
+            confirm_answers=[False, True, False, False],
+        )
+
+        result = invoke("optimize")
+
+        assert result.exit_code == ExitCode.OK
+        assert "2" in result.output
+
+    def test_reverse_direction_renders_reverse_map(self, invoke, monkeypatch):
+        _patch_prompts(
+            monkeypatch,
+            prompt_answers=[
+                "del",
+                "han",
+                "2d",
+                "dad",
+                "1.5d",
+                "del",
+                "reverse",
+                "fixed",
+            ],
+            confirm_answers=[True, False, False],
+        )
+
+        result = invoke("optimize")
+
+        assert result.exit_code == ExitCode.OK
+        assert "Reverse Duration Map" in result.output
+        section = result.output.split("Reverse Duration Map", maxsplit=1)[1]
+        assert "DAD" in section
+        assert "HAN" in section
+        assert section.find("DAD") < section.find("HAN")
+
+    def test_both_direction_renders_comparison(self, invoke, monkeypatch):
+        _patch_prompts(
+            monkeypatch,
+            prompt_answers=[
+                "del",
+                "han",
+                "2d",
+                "dad",
+                "1.5d",
+                "del",
+                "both",
+                "fixed",
+            ],
+            confirm_answers=[True, False, False],
+        )
+
+        result = invoke("optimize")
+
+        assert result.exit_code == ExitCode.OK
+        assert "Direction Comparison" in result.output
+        assert "Forward" in result.output
+        assert "Reverse" in result.output
