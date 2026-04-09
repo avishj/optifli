@@ -7,15 +7,19 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 # US-006: Build Ticket Construction Candidates
 
 ## Type
+
 Engine behavior
 
 ## Story
+
 As a budget traveler, I want Optifli to compare one-way, multi-city, and round-trip constructions so I can book the cheapest feasible combination.
 
 ## Business Value
+
 Different fare constructions often produce materially different totals.
 
 ## Acceptance Criteria
+
 1. The combination engine generates all-one-way candidate plans for every valid route candidate.
 2. The combination engine generates valid multi-city booking candidates when leg continuity rules are satisfied (arrival city group of leg N equals departure city group of leg N+1).
 3. The combination engine builds round-trip candidates only when outbound and inbound legs are opposite-direction travel between the same city groups and satisfy traveler constraints.
@@ -24,5 +28,6 @@ Different fare constructions often produce materially different totals.
 6. Each candidate plan stores total fare, per-leg fare allocation, construction type, and allocation metadata (`allocationSource`), where allocation uses FLI-provided leg breakdown when available, otherwise a documented fallback method.
 
 ## Dependencies
+
 1. Route/date candidates.
 2. Leg-level flight result sets.
