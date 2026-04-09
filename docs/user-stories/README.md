@@ -7,6 +7,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 # Optifli User Stories
 
 ## User-Facing Stories
+
 1. US-001: Itinerary and constraints.
 2. US-002: Reverse duration remap.
 3. US-003: City airport groups.
@@ -18,12 +19,14 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 9. US-015: Airport suggestion confirmation.
 
 ## Engine Behavior Stories
+
 1. US-004: Route and date candidates.
 2. US-005: Flight search policy.
 3. US-006: Booking construction.
 4. US-007: Scoring and swaps.
 
 ## Operational Stories
+
 1. US-010: Rate-limit resilience.
 2. US-012: Performance, rate-limit-aware execution and artifacts.
 
@@ -45,5 +48,6 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 Each story is defined as a modular implementation unit with clear interfaces, dependencies, and acceptance criteria.
 
 ## Templates
+
 1. docs/user-stories/TEMPLATE-user-story.md
 2. docs/engineering-specs/TEMPLATE-engineering-spec.md

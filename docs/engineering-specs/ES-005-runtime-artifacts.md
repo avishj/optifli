@@ -7,12 +7,15 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 # ES-005: Runtime and Artifact Contract
 
 ## Purpose
+
 Defines runtime progress, cancellation, and artifact contract details supporting US-012.
 
 ## Supports
+
 1. docs/user-stories/US-012-performance-and-artifacts.md
 
 ## Contract
+
 1. Runtime does not promise fixed completion time.
 2. Progress display includes completed legs, requests, retries, and throttle/backoff events.
 3. Summary progress refreshes every 5 seconds by default and updates immediately on critical events.
@@ -23,5 +26,6 @@ Defines runtime progress, cancellation, and artifact contract details supporting
 8. Runtime budget defaults and bounds are `maxRequests` default 500 range 50-5000, `maxRetries` default 5 range 0-10, and `maxExpansionRounds` default 2 range 0-10.
 
 ## Validation
+
 1. Runtime tests verify progress and cancellation behavior.
 2. Artifact tests verify schema fields and replay compatibility checks.
