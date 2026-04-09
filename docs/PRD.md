@@ -11,6 +11,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 Optifli is a CLI-first optimization engine for multi-city trips. It uses the FLI Python library to query Google Flights data, then compares different ways to route and ticket the same vacation.
 
 The engine should help a traveler answer questions like:
+
 1. Should I do this route forward or reverse?
 2. Should I keep the order or reorder cities?
 3. Should I book as all one-way tickets, a multi-city ticket, round-trip combos, or a mix?
@@ -25,6 +26,7 @@ Optifli should do that heavy lifting and return clear, practical options.
 ## Quick Example
 
 This is the kind of itinerary Optifli is designed for:
+
 1. Route (IATA): DEL -> HAN -> DAD -> PQC -> SIN -> DEL.
 2. Route (city names): Delhi -> Hanoi -> Da Nang -> Phu Quoc -> Singapore -> Delhi.
 3. Stay durations (including half-day): HAN=2d, DAD=1.5d, PQC=3d, SIN=0.5d.
