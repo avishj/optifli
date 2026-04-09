@@ -7,6 +7,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 # PRD: Optifli Flight Optimization Engine
 
 ## What We Are Building
+
 Optifli is a CLI-first optimization engine for multi-city trips. It uses the FLI Python library to query Google Flights data, then compares different ways to route and ticket the same vacation.
 
 The engine should help a traveler answer questions like:
@@ -16,11 +17,13 @@ The engine should help a traveler answer questions like:
 4. Which leg swaps improve price or convenience without breaking my trip constraints?
 
 ## Why This Matters
+
 For a trip with several cities, there are too many combinations to compare manually. People usually miss good options because they only check one route order or one booking style.
 
 Optifli should do that heavy lifting and return clear, practical options.
 
 ## Quick Example
+
 This is the kind of itinerary Optifli is designed for:
 1. Route (IATA): DEL -> HAN -> DAD -> PQC -> SIN -> DEL.
 2. Route (city names): Delhi -> Hanoi -> Da Nang -> Phu Quoc -> Singapore -> Delhi.
@@ -31,6 +34,7 @@ This is the kind of itinerary Optifli is designed for:
 7. The engine compares one-way, multi-city, round-trip, and mixed constructions.
 
 ## Key Terms
+
 1. Itinerary: ordered list of cities including start and return city.
 2. Leg: one flight segment between two cities in a candidate route.
 3. City group: the set of allowed airports for a city.
@@ -45,6 +49,7 @@ This is the kind of itinerary Optifli is designed for:
 12. Round-trip compatibility rule: the minimum conditions needed to treat two opposite-direction legs as one round-trip candidate.
 
 ## Goals
+
 1. Generate valid optimization results for itineraries with an origin, up to 10 destination cities, and a final return city.
 2. Support both full automatic optimization and interactive leg-by-leg locking.
 3. Respect real trip constraints: stay durations, date/time windows, airport preferences, and stop preferences.
@@ -54,6 +59,7 @@ This is the kind of itinerary Optifli is designed for:
 ## Scope
 
 ### In Scope
+
 1. FLI library integration only.
 2. One-way, multi-city, and round-trip fare construction analysis.
 3. Forward, reverse, and both-direction comparisons.
@@ -65,6 +71,7 @@ This is the kind of itinerary Optifli is designed for:
 9. CLI-first output with machine-readable run artifacts.
 
 ### Out of Scope
+
 1. Hotel, visa, baggage, insurance, or non-flight planning.
 2. Booking and payment execution.
 3. MCP server integration.
@@ -73,6 +80,7 @@ This is the kind of itinerary Optifli is designed for:
 ## Product Requirements
 
 ### 1) Inputs and Constraints
+
 1. The CLI accepts an itinerary with origin, 1-10 destination cities, and final return city.
 2. The CLI accepts stay durations per destination.
 3. Stay duration supports fractional values, including half-day and smaller units.
@@ -87,6 +95,7 @@ This is the kind of itinerary Optifli is designed for:
 12. If timezone context is missing, the CLI returns a clear validation error.
 
 ### 2) Time Logic and Duration Handling
+
 1. Forward mode and reverse mode both preserve city-level stay intent.
 2. In reverse mode, duration stays attached to the destination city, not the original leg position.
 3. Per-city override is supported in reverse mode.
@@ -96,6 +105,7 @@ This is the kind of itinerary Optifli is designed for:
 7. Duration handling must not drift on timezone or daylight-saving transitions.
 
 ### 3) Airport Handling
+
 1. Users can define airport sets per city.
 2. Users can include or exclude airports from each city group.
 3. The system does not maintain or enforce a curated airport list; user-selected airports are the source of truth.
@@ -108,6 +118,7 @@ This is the kind of itinerary Optifli is designed for:
 10. If the dataset is unavailable, nearby-airport suggestions are disabled for that run and the CLI reports suggestions as temporarily unavailable without blocking user-provided airport input.
 
 ### 4) Route and Candidate Generation
+
 1. Support direction modes: forward, reverse, both.
 2. Support route modes: fixed order, reorder-enabled.
 3. In reorder-enabled mode, keep first departure city and final return city fixed; permute intermediate cities.
@@ -115,6 +126,7 @@ This is the kind of itinerary Optifli is designed for:
 5. Apply pruning limits so search does not explode for large itineraries.
 
 ### 5) Flight Search Policy
+
 1. Use FLI Python library as the flight data source.
 2. Attempt non-stop first by default.
 3. If non-stop returns no valid results and fallback is enabled, retry with one-stop as a backup path.
@@ -123,6 +135,7 @@ This is the kind of itinerary Optifli is designed for:
 6. Support optional arrival cutoff filtering when requested.
 
 ### 6) Booking Construction
+
 1. Generate all-one-way candidate plans.
 2. Generate valid multi-city booking candidates.
 3. Build round-trip candidates only when outbound and inbound legs are opposite-direction travel between the same city groups and satisfy traveler constraints (passenger mix, cabin or fare restrictions, airport-group compatibility, and configured time windows).
@@ -131,6 +144,7 @@ This is the kind of itinerary Optifli is designed for:
 6. De-duplicate equivalent plans.
 
 ### 7) Ranking and Alternatives
+
 1. Default ranking uses a weighted score profile across total price, total duration, stops, and departure convenience.
 2. Preset scoring profiles are available with explicit defaults: Cheapest (Price 100%, Duration 0%, Stops 0%, Convenience 0%), Balanced default (Price 40%, Duration 30%, Stops 20%, Convenience 10%), Fastest (Price 0%, Duration 100%, Stops 0%, Convenience 0%), and Fewer Stops (Price 0%, Duration 0%, Stops 100%, Convenience 0%).
 3. Every recommendation includes transparent component scores and final weighted score.
@@ -139,6 +153,7 @@ This is the kind of itinerary Optifli is designed for:
 6. Every leg alternative includes swap impact summary: fare delta, duration delta, stop delta, and bundle-compatibility impact, with explicit warning when reduced bundle compatibility may increase total trip price.
 
 ### 8) Execution Modes and Output
+
 1. Full automatic mode: optimize the whole trip at once.
 2. Interactive mode: let user lock a leg, then recompute remaining legs.
 3. CLI output includes grouped direction views (forward/reverse when requested), ranked full-trip plans, leg-level alternatives, constraints used, search policy trace, and status classification for partial/failed lookups.
@@ -147,6 +162,7 @@ This is the kind of itinerary Optifli is designed for:
 6. If a swap breaks or weakens bundle compatibility, output must warn that total trip price can increase versus bundled pricing.
 
 ### 9) Reliability and Runtime Behavior
+
 1. Classify unresolved lookups as no-inventory, rate-limited, or unknown.
 2. Retry transient failures with exponential backoff and jitter.
 3. Throttle requests to reduce API rate-limit risk.
@@ -157,12 +173,14 @@ This is the kind of itinerary Optifli is designed for:
 8. Support configurable request budgets with defaults and bounds: `maxRequests` (default 500, range 50-5000), `maxRetries` (default 5, range 0-10), and `maxExpansionRounds` (default 2, range 0-10).
 
 ## Success Criteria
+
 1. The engine reliably returns either ranked plans or clearly classified partial output.
 2. Ranking is deterministic for identical inputs and cached responses.
 3. No failures are returned without status classification.
 4. Users can understand why a plan ranked higher than another without digging into raw logs.
 
 ## Decision Log
+
 1. Airport curation: no curated airport list. Users define airport sets per city, and Optifli uses those sets.
 2. Round-trip compatibility: pair opposite-direction legs between the same city groups, apply traveler constraints, and include only when FLI returns a valid round-trip fare quote.
 3. Scoring: weighted scoring is the default mode with explicit preset weights (Cheapest 100/0/0/0, Balanced 40/30/20/10, Fastest 0/100/0/0, Fewer Stops 0/0/100/0 for Price/Duration/Stops/Convenience).
@@ -170,6 +188,7 @@ This is the kind of itinerary Optifli is designed for:
 ## Linked Documentation
 
 ### User-Facing Stories
+
 1. docs/user-stories/US-001-itinerary-and-constraints.md
 2. docs/user-stories/US-002-reverse-duration-remap.md
 3. docs/user-stories/US-003-city-airport-groups.md
@@ -181,16 +200,19 @@ This is the kind of itinerary Optifli is designed for:
 9. docs/user-stories/US-015-airport-suggestion-confirmation.md
 
 ### Engine Behavior Stories
+
 1. docs/user-stories/US-004-route-and-date-candidates.md
 2. docs/user-stories/US-005-flight-search-policy.md
 3. docs/user-stories/US-006-booking-construction.md
 4. docs/user-stories/US-007-scoring-and-swaps.md
 
 ### Operational Stories
+
 1. docs/user-stories/US-010-rate-limit-resilience.md
 2. docs/user-stories/US-012-performance-and-artifacts.md
 
 ### Engineering Specs
+
 1. docs/engineering-specs/ES-001-search-policy-contract.md
 2. docs/engineering-specs/ES-002-scoring-contract.md
 3. docs/engineering-specs/ES-003-reporting-contract.md
@@ -198,4 +220,5 @@ This is the kind of itinerary Optifli is designed for:
 5. docs/engineering-specs/ES-005-runtime-artifacts.md
 
 ### Deferred Items
+
 1. docs/TBD.md
