@@ -138,7 +138,10 @@ jobs:
           shellcheck: true
           pyflakes: true
           flags: "-color"
-          working-directory: ${{ runner.temp }}
+
+      - name: Clean up actionlint artifacts
+        if: '!cancelled()'
+        run: rm -rf node_modules package-lock.json
 
       - name: Run hadolint
         if: '!cancelled()'
