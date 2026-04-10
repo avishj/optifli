@@ -1,0 +1,7 @@
+{
+  "origin": { "name": "Delhi", "airports": ["XX"] },
+  "destinations": [
+    { "city": { "name": "Hanoi", "airports": ["HAN"] }, "stay": "2d" }
+  ],
+  "return_city": { "name": "Delhi", "airports": ["DEL"] }
+}

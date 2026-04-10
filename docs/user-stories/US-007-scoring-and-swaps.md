@@ -7,15 +7,19 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 # US-007: Score, Rank, and Surface Leg Swaps
 
 ## Type
+
 Engine behavior
 
 ## Story
+
 As a decision-maker, I want transparent ranking and swap suggestions so I can trade off price, duration, and convenience intelligently.
 
 ## Business Value
+
 Explainable ranking increases trust and booking confidence.
 
 ## Acceptance Criteria
+
 1. Default ranking uses weighted scoring across total price, total duration, number of stops, and departure convenience.
 2. Preset scoring profiles are available with Balanced as default.
 3. Every returned plan includes component scores and the final weighted score.
@@ -24,10 +28,12 @@ Explainable ranking increases trust and booking confidence.
 6. Top-N limits for global plans and leg alternatives are configurable via CLI and profile.
 
 ## Dependencies
+
 1. Candidate plan objects from US-006.
 2. Constraint validator.
 3. Artifact schema versioning and replay compatibility rules are defined in US-012.
 
 ## Linked Engineering Specs
+
 1. docs/engineering-specs/ES-002-scoring-contract.md
 2. docs/TBD.md

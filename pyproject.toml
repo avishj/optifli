@@ -30,6 +30,7 @@ dependencies = [
     "cyclopts>=4.10.1",
     "rich>=14.3.3",
     "pydantic-settings>=2.13.1",
+    "flights>=0.8.4",
 ]
 
 [project.urls]
@@ -54,13 +55,14 @@ dev = [
     "pytest-xdist>=3.8.0",
     "pytest-mock>=3.15.1",
     "pytest-github-actions-annotate-failures>=0.4.0",
-    "mkdocs-material>=9.7.6",
-    "mkdocstrings[python]>=1.0.3",
+    "tzdata>=2026.1; sys_platform == 'win32'",
+    "zensical>=0.0.32",
+    "mkdocstrings-python>=2.0.3",
     "commitizen>=4.13.9",
     "complexipy>=5.2.0",
     "pre-commit>=4.5.1",
-    "ruff>=0.15.8",
-    "ty>=0.0.27",
+    "ruff>=0.15.9",
+    "ty>=0.0.29",
 ]
 
 [tool.hatch.build.targets.wheel]
@@ -145,6 +147,11 @@ ignore = [
     "PLR2004", # magic values in tests
     "SLF001", # private member access in tests
     "FBT",    # boolean traps in tests
+    "DTZ",    # naive datetimes needed to test tz validation
+]
+"tests/e2e/*.py" = [
+    "S603",   # subprocess.run is intentional in CLI end-to-end tests
+    "S607",   # console scripts from PATH are intentional in CLI end-to-end tests
 ]
 
 [tool.ruff.lint.isort]
@@ -156,8 +163,16 @@ convention = "google"
 [tool.ruff.lint.mccabe]
 max-complexity = 15
 
-[tool.ty]
+[tool.ty.environment]
 python-version = "3.13"
+
+[tool.ty.rules]
+missing-argument = "ignore"      # Pydantic model_post_init / validators
+unknown-argument = "ignore"      # pydantic-settings underscore kwargs
+no-matching-overload = "ignore"  # dict.get in model validators
+invalid-assignment = "ignore"    # dict mutations in model validators
+invalid-return-type = "ignore"   # model validator return types
+invalid-argument-type = "ignore" # Pydantic coerces dicts/strings to models
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
@@ -181,6 +196,7 @@ source = ["optifli"]
 branch = true
 parallel = true
 relative_files = true
+patch = ["subprocess"]
 
 [tool.coverage.report]
 fail_under = 70

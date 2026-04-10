@@ -26,16 +26,73 @@ def test_version_flag():
     assert result.stdout.strip()
 
 
-def test_hello_command():
-    result = _run("hello", "World")
+def test_optimize_profile(profiles_dir):
+    result = _run("optimize", "--profile", str(profiles_dir / "minimal.json"))
     assert result.returncode == 0
-    assert "World" in result.stdout
+    assert "Delhi" in result.stdout
+    assert "Hanoi" in result.stdout
+
+
+def test_optimize_full_profile(profiles_dir):
+    result = _run("optimize", "--profile", str(profiles_dir / "full.json"))
+    assert result.returncode == 0
+    assert "Delhi" in result.stdout
+    assert "Hanoi" in result.stdout
+    assert "Da Nang" in result.stdout
+    assert "Forward" in result.stdout
+    assert "Reverse" in result.stdout
 
 
 def test_no_args_shows_help():
     result = _run()
     assert result.returncode == 0
     assert "Usage" in result.stdout or "optifli" in result.stdout
+
+
+def test_optimize_missing_profile():
+    result = _run("optimize", "--profile", "nonexistent.json")
+    assert result.returncode != 0
+    assert "not found" in result.stderr.lower()
+
+
+def test_verbose_flag(profiles_dir):
+    result = _run(
+        "--verbose", "optimize", "--profile", str(profiles_dir / "minimal.json")
+    )
+    assert result.returncode == 0
+    assert "Delhi" in result.stdout
+
+
+def test_optimize_reverse_profile(profiles_dir):
+    result = _run("optimize", "--profile", str(profiles_dir / "reverse.json"))
+    assert result.returncode == 0
+    assert "Reverse" in result.stdout
+    assert "Da Nang" in result.stdout
+    assert "Hanoi" in result.stdout
+
+
+def test_optimize_invalid_data_profile(profiles_dir):
+    result = _run("optimize", "--profile", str(profiles_dir / "invalid_data.json"))
+    assert result.returncode != 0
+    assert "error" in result.stderr.lower()
+
+
+def test_optimize_malformed_profile(profiles_dir):
+    result = _run("optimize", "--profile", str(profiles_dir / "malformed.json"))
+    assert result.returncode != 0
+    assert "error" in result.stderr.lower()
+
+
+def test_invalid_env_config():
+    result = subprocess.run(
+        ["optifli", "--help"],
+        capture_output=True,
+        text=True,
+        check=False,
+        env={**__import__("os").environ, "OPTIFLI_LOG_FORMAT": "garbage"},
+    )
+    assert result.returncode != 0
+    assert "configuration" in result.stderr.lower()
 
 
 def test_invalid_command():

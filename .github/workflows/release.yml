@@ -20,8 +20,6 @@ jobs:
     name: Check Published State
     runs-on: ubuntu-latest
     timeout-minutes: 5
-    permissions:
-      contents: read
     outputs:
       pypi: ${{ steps.check.outputs.pypi }}
       ghcr: ${{ steps.check.outputs.ghcr }}
@@ -387,8 +385,8 @@ jobs:
 
       - name: Generate checksums
         run: |
-          (cd dist && sha256sum *) > SHA256SUMS
-          (cd sbom && sha256sum *) >> SHA256SUMS
+          (cd dist && sha256sum ./*) > SHA256SUMS
+          (cd sbom && sha256sum ./*) >> SHA256SUMS
 
       - name: Create GitHub release
         env:
