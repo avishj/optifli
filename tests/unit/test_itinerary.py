@@ -215,6 +215,41 @@ class TestLegValid:
         assert len(leg.destination.airports) == 2
 
 
+class TestLegSameOriginDestination:
+    def test_same_airports_rejected(self):
+        with pytest.raises(ValidationError, match="origin and destination must differ"):
+            Leg(
+                origin={"name": "Delhi", "airports": ["DEL"]},
+                destination={"name": "Delhi", "airports": ["DEL"]},
+                departure_window={
+                    "start": datetime(2026, 7, 16, 19, 0, tzinfo=UTC),
+                    "end": datetime(2026, 7, 17, 11, 0, tzinfo=UTC),
+                },
+            )
+
+    def test_same_airports_different_name_rejected(self):
+        with pytest.raises(ValidationError, match="origin and destination must differ"):
+            Leg(
+                origin={"name": "Delhi IGI", "airports": ["DEL"]},
+                destination={"name": "Delhi", "airports": ["DEL"]},
+                departure_window={
+                    "start": datetime(2026, 7, 16, 19, 0, tzinfo=UTC),
+                    "end": datetime(2026, 7, 17, 11, 0, tzinfo=UTC),
+                },
+            )
+
+    def test_different_airports_allowed(self):
+        leg = Leg(
+            origin={"name": "Delhi", "airports": ["DEL"]},
+            destination={"name": "Hanoi", "airports": ["HAN"]},
+            departure_window={
+                "start": datetime(2026, 7, 16, 19, 0, tzinfo=UTC),
+                "end": datetime(2026, 7, 17, 11, 0, tzinfo=UTC),
+            },
+        )
+        assert leg.origin.airports != leg.destination.airports
+
+
 class TestLegNestedValidation:
     def test_bad_airport_bubbles_up(self):
         with pytest.raises(ValidationError, match="not a recognized IATA"):

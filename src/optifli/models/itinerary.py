@@ -67,6 +67,13 @@ class Leg(BaseModel, frozen=True):
     departure_window: DepartureWindow
     arrival_cutoff: ArrivalCutoff | None = None
 
+    @model_validator(mode="after")
+    def _validate_different_cities(self) -> Self:
+        if self.origin.airports == self.destination.airports:
+            msg = "Leg origin and destination must differ"
+            raise ValueError(msg)
+        return self
+
 
 MAX_DESTINATIONS = 10
 
