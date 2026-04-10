@@ -8,7 +8,7 @@ import re
 from typing import Annotated, Self
 
 from fli.models import Airport
-from pydantic import BaseModel, BeforeValidator, model_validator
+from pydantic import BaseModel, BeforeValidator, ConfigDict, model_validator
 
 _IATA_RE = re.compile(r"^[A-Z]{3}$")
 
@@ -44,6 +44,8 @@ class CityGroup(BaseModel, frozen=True):
         name: User-facing label (e.g. ``"Delhi"``).
         airports: Airports to search (at least one required).
     """
+
+    model_config = ConfigDict(extra="forbid")
 
     name: str
     airports: list[IATACode]

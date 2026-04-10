@@ -118,6 +118,33 @@ class TestLoadProfileValidationErrors:
         with pytest.raises(ProfileError, match="validation failed"):
             load_profile(p)
 
+    def test_extra_top_level_field_rejected(self, tmp_path):
+        data = {
+            "origin": {"name": "Delhi", "include": ["DEL"]},
+            "destinations": [
+                {"city": {"name": "Hanoi", "include": ["HAN"]}, "stay": "2d"},
+            ],
+            "return_city": {"name": "Delhi", "include": ["DEL"]},
+            "bogus_field": "should fail",
+        }
+        p = tmp_path / "extra.json"
+        p.write_text(json.dumps(data), encoding="utf-8")
+        with pytest.raises(ProfileError, match="validation failed"):
+            load_profile(p)
+
+    def test_extra_nested_field_rejected(self, tmp_path):
+        data = {
+            "origin": {"name": "Delhi", "include": ["DEL"], "region": "Asia"},
+            "destinations": [
+                {"city": {"name": "Hanoi", "include": ["HAN"]}, "stay": "2d"},
+            ],
+            "return_city": {"name": "Delhi", "include": ["DEL"]},
+        }
+        p = tmp_path / "extra_nested.json"
+        p.write_text(json.dumps(data), encoding="utf-8")
+        with pytest.raises(ProfileError, match="validation failed"):
+            load_profile(p)
+
     def test_naive_datetime_in_leg(self, tmp_path):
         data = {
             "origin": {"name": "Delhi", "include": ["DEL"]},

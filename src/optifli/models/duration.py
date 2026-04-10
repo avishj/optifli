@@ -7,7 +7,7 @@
 import re
 from datetime import timedelta
 
-from pydantic import BaseModel, model_validator
+from pydantic import BaseModel, ConfigDict, model_validator
 
 _DURATION_RE = re.compile(r"^(\d+(?:\.\d+)?)\s*([dDhH])$")
 
@@ -18,6 +18,8 @@ class Duration(BaseModel, frozen=True):
     Accepted string formats: ``"2d"``, ``"1.5d"``, ``"12h"``, ``"2.5h"``.
     Compound formats like ``"1d12h"`` are rejected.
     """
+
+    model_config = ConfigDict(extra="forbid")
 
     _timedelta: timedelta
 

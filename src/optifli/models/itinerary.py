@@ -7,7 +7,7 @@
 from enum import StrEnum
 from typing import Annotated, Self
 
-from pydantic import BaseModel, BeforeValidator, model_validator
+from pydantic import BaseModel, BeforeValidator, ConfigDict, model_validator
 
 from optifli.models.airport import CityGroup
 from optifli.models.duration import Duration
@@ -48,6 +48,8 @@ class Destination(BaseModel, frozen=True):
         stay: How long to stay at this destination.
     """
 
+    model_config = ConfigDict(extra="forbid")
+
     city: CityGroup
     stay: Duration
 
@@ -61,6 +63,8 @@ class Leg(BaseModel, frozen=True):
         departure_window: When the flight should depart.
         arrival_cutoff: Optional upper-bound arrival time.
     """
+
+    model_config = ConfigDict(extra="forbid")
 
     origin: CityGroup
     destination: CityGroup
@@ -89,6 +93,8 @@ class Itinerary(BaseModel, frozen=True):
         route_mode: Whether destination order is fixed or reorderable.
         legs: Explicit per-leg departure windows (optional).
     """
+
+    model_config = ConfigDict(extra="forbid")
 
     origin: CityGroup
     destinations: list[Destination]

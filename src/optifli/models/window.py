@@ -7,7 +7,7 @@
 from datetime import datetime
 from typing import Self
 
-from pydantic import BaseModel, model_validator
+from pydantic import BaseModel, ConfigDict, model_validator
 
 
 def _require_tz_aware(dt: datetime, field: str) -> None:
@@ -27,6 +27,8 @@ class DepartureWindow(BaseModel, frozen=True):
     ``start`` must be strictly before ``end``.
     """
 
+    model_config = ConfigDict(extra="forbid")
+
     start: datetime
     end: datetime
 
@@ -42,6 +44,8 @@ class DepartureWindow(BaseModel, frozen=True):
 
 class ArrivalCutoff(BaseModel, frozen=True):
     """A TZ-aware upper-bound datetime for arrival."""
+
+    model_config = ConfigDict(extra="forbid")
 
     deadline: datetime
 
