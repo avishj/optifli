@@ -13,6 +13,7 @@ from optifli.engine.candidates import (
     RouteCandidate,
     build_leg_sequence,
     compute_first_window,
+    propagate_all_windows,
     propagate_window,
 )
 from optifli.models.airport import CityGroup
@@ -170,3 +171,42 @@ class TestPropagateWindow:
         stay = Duration.model_validate("2d")
         w = propagate_window(first, stay, window_width=timedelta(hours=12))
         assert w.end - w.start == timedelta(hours=12)
+
+
+class TestPropagateAllWindows:
+    def test_single_destination_two_legs(self):
+        stays = [Duration.model_validate("2d")]
+        windows = propagate_all_windows(date(2026, 7, 16), stays, leg_count=2)
+        assert len(windows) == 2
+        assert windows[0].start == datetime(2026, 7, 16, 0, 0, tzinfo=UTC)
+        # leg 2: 0h + 6h travel + 48h stay = 54h
+        expected = datetime(2026, 7, 16, 0, 0, tzinfo=UTC) + timedelta(hours=54)
+        assert windows[1].start == expected
+
+    def test_three_destinations_four_legs(self):
+        stays = [
+            Duration.model_validate("2d"),
+            Duration.model_validate("1.5d"),
+            Duration.model_validate("3d"),
+        ]
+        windows = propagate_all_windows(date(2026, 7, 16), stays, leg_count=4)
+        assert len(windows) == 4
+        for w in windows:
+            assert w.start < w.end
+
+    def test_fractional_durations(self):
+        stays = [Duration.model_validate("0.5d"), Duration.model_validate("12h")]
+        windows = propagate_all_windows(date(2026, 7, 16), stays, leg_count=3)
+        assert len(windows) == 3
+        # leg 2: 6h travel + 12h stay = 18h offset
+        assert windows[1].start == datetime(2026, 7, 16, 18, 0, tzinfo=UTC)
+        # leg 3: 18h + 6h travel + 12h stay = 36h offset
+        assert windows[2].start == datetime(2026, 7, 16, 0, 0, tzinfo=UTC) + timedelta(
+            hours=36
+        )
+
+    def test_determinism(self):
+        stays = [Duration.model_validate("2d"), Duration.model_validate("1d")]
+        a = propagate_all_windows(date(2026, 7, 16), stays, leg_count=3)
+        b = propagate_all_windows(date(2026, 7, 16), stays, leg_count=3)
+        assert a == b
