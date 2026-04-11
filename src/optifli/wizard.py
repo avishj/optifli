@@ -24,6 +24,7 @@ from optifli.models.itinerary import (
 )
 from optifli.models.window import ArrivalCutoff, DepartureWindow
 
+_DATE_HINT = "Use ISO format YYYY-MM-DD, e.g. 2026-07-16"
 _WINDOW_HINT = "Use timezone-aware ISO datetimes and keep end after start"
 _CUTOFF_HINT = "Use an ISO 8601 datetime with timezone, e.g. 2026-07-16T19:00:00+05:30"
 _error_console = Console(stderr=True)
@@ -95,6 +96,20 @@ def _prompt_destination(index: int) -> Destination:
     city = _prompt_city(f"Destination {index} airport code")
     stay = _prompt_duration(f"Destination {index} stay duration")
     return Destination(city=city, stay=stay)
+
+
+def _prompt_departure_date() -> date:
+    """Prompt until a valid trip start date is provided."""
+    while True:
+        value = Prompt.ask("Trip start date (YYYY-MM-DD)")
+        try:
+            return date.fromisoformat(value.strip())
+        except ValueError:
+            _print_error(
+                field="Trip start date",
+                reason="Invalid date format",
+                hint=_DATE_HINT,
+            )
 
 
 def _prompt_departure_window(
@@ -191,7 +206,7 @@ def _collect() -> Itinerary:
         else:
             route_mode = RouteMode.FIXED
 
-    departure_date = date.today() if not legs else None
+    departure_date = _prompt_departure_date() if not legs else None
 
     return Itinerary(
         origin=origin,
