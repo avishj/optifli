@@ -121,3 +121,10 @@ class Itinerary(BaseModel, frozen=True):
             )
             raise ValueError(msg)
         return self
+
+    @model_validator(mode="after")
+    def _validate_departure_date_required(self) -> Self:
+        if not self.legs and self.departure_date is None:
+            msg = "'departure_date' is required when no explicit legs are provided"
+            raise ValueError(msg)
+        return self

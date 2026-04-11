@@ -354,6 +354,18 @@ class TestItineraryInvalid:
             )
 
 
+def _make_leg():
+    """Create a minimal valid Leg for testing."""
+    return {
+        "origin": _DELHI,
+        "destination": _HANOI,
+        "departure_window": {
+            "start": datetime(2026, 7, 16, 19, 0, tzinfo=UTC),
+            "end": datetime(2026, 7, 17, 11, 0, tzinfo=UTC),
+        },
+    }
+
+
 class TestDepartureDate:
     def test_departure_date_stored(self):
         it = Itinerary(
@@ -364,11 +376,12 @@ class TestDepartureDate:
         )
         assert it.departure_date == date(2026, 7, 16)
 
-    def test_departure_date_defaults_to_none(self):
+    def test_departure_date_defaults_to_none_with_legs(self):
         it = Itinerary(
             origin=_DELHI,
             destinations=[_dest(_HANOI)],
             return_city=_DELHI,
+            legs=[_make_leg()],
         )
         assert it.departure_date is None
 
@@ -382,3 +395,41 @@ class TestDepartureDate:
         data = it.model_dump()
         restored = Itinerary.model_validate(data)
         assert restored.departure_date == date(2026, 12, 25)
+
+
+class TestDepartureDateRequired:
+    def test_no_legs_no_date_rejected(self):
+        with pytest.raises(ValidationError, match="departure_date.*required"):
+            Itinerary(
+                origin=_DELHI,
+                destinations=[_dest(_HANOI)],
+                return_city=_DELHI,
+            )
+
+    def test_no_legs_with_date_valid(self):
+        it = Itinerary(
+            origin=_DELHI,
+            destinations=[_dest(_HANOI)],
+            return_city=_DELHI,
+            departure_date=date(2026, 7, 16),
+        )
+        assert it.departure_date == date(2026, 7, 16)
+
+    def test_legs_without_date_valid(self):
+        it = Itinerary(
+            origin=_DELHI,
+            destinations=[_dest(_HANOI)],
+            return_city=_DELHI,
+            legs=[_make_leg()],
+        )
+        assert it.departure_date is None
+
+    def test_legs_with_date_valid(self):
+        it = Itinerary(
+            origin=_DELHI,
+            destinations=[_dest(_HANOI)],
+            return_city=_DELHI,
+            legs=[_make_leg()],
+            departure_date=date(2026, 7, 16),
+        )
+        assert it.departure_date == date(2026, 7, 16)
