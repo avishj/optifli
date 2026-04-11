@@ -4,12 +4,16 @@
 
 """Unit tests for route candidate generation."""
 
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime, timedelta
 
 import pytest
 from pydantic import ValidationError
 
-from optifli.engine.candidates import RouteCandidate, build_leg_sequence
+from optifli.engine.candidates import (
+    RouteCandidate,
+    build_leg_sequence,
+    compute_first_window,
+)
 from optifli.models.airport import CityGroup
 from optifli.models.itinerary import Destination, DirectionMode
 
@@ -110,3 +114,21 @@ class TestBuildLegSequence:
         pairs = build_leg_sequence(origin, dests, ret)
         assert pairs[0][0].airports == ["DEL"]
         assert pairs[-1][1].airports == ["SIN"]
+
+
+class TestComputeFirstWindow:
+    def test_default_24h_window(self):
+        w = compute_first_window(date(2026, 7, 16))
+        assert w.start == datetime(2026, 7, 16, 0, 0, tzinfo=UTC)
+        assert w.end == datetime(2026, 7, 17, 0, 0, tzinfo=UTC)
+
+    def test_custom_width(self):
+        w = compute_first_window(date(2026, 7, 16), window_width=timedelta(hours=12))
+        assert w.start == datetime(2026, 7, 16, 0, 0, tzinfo=UTC)
+        assert w.end == datetime(2026, 7, 16, 12, 0, tzinfo=UTC)
+
+    def test_returns_valid_departure_window(self):
+        w = compute_first_window(date(2026, 7, 16))
+        assert w.start.tzinfo is not None
+        assert w.end.tzinfo is not None
+        assert w.start < w.end

@@ -4,6 +4,7 @@
 
 """Route candidate generation."""
 
+from datetime import UTC, date, datetime, timedelta
 from itertools import pairwise
 from typing import Self
 
@@ -11,6 +12,7 @@ from pydantic import BaseModel, ConfigDict, model_validator
 
 from optifli.models.airport import CityGroup
 from optifli.models.itinerary import Destination, DirectionMode, Leg
+from optifli.models.window import DepartureWindow
 
 
 class RouteCandidate(BaseModel, frozen=True):
@@ -71,3 +73,25 @@ def build_leg_sequence(
         return_city,
     ]
     return list(pairwise(stops))
+
+
+def compute_first_window(
+    departure_date: date,
+    window_width: timedelta = timedelta(hours=24),
+) -> DepartureWindow:
+    """Compute the departure window for the first leg from a calendar date.
+
+    Args:
+        departure_date: Trip start date.
+        window_width: Width of the departure window.
+
+    Returns:
+        A TZ-aware ``DepartureWindow`` starting at midnight UTC.
+    """
+    start = datetime(
+        departure_date.year,
+        departure_date.month,
+        departure_date.day,
+        tzinfo=UTC,
+    )
+    return DepartureWindow(start=start, end=start + window_width)
