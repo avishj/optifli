@@ -4,6 +4,7 @@
 
 """Itinerary domain models."""
 
+from datetime import date
 from enum import StrEnum
 from typing import Annotated, Self
 
@@ -92,6 +93,7 @@ class Itinerary(BaseModel, frozen=True):
         direction: Search direction mode.
         route_mode: Whether destination order is fixed or reorderable.
         legs: Explicit per-leg departure windows (optional).
+        departure_date: Trip start date (required when no explicit legs).
     """
 
     model_config = ConfigDict(extra="forbid")
@@ -104,6 +106,7 @@ class Itinerary(BaseModel, frozen=True):
     )
     route_mode: Annotated[RouteMode, BeforeValidator(str.lower)] = RouteMode.FIXED
     legs: list[Leg] = []
+    departure_date: date | None = None
 
     @model_validator(mode="after")
     def _validate_destinations(self) -> Self:

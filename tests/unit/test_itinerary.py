@@ -4,7 +4,7 @@
 
 """Unit tests for itinerary models."""
 
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 
 import pytest
 from pydantic import ValidationError
@@ -352,3 +352,33 @@ class TestItineraryInvalid:
                 destinations=dests,
                 return_city=_DELHI,
             )
+
+
+class TestDepartureDate:
+    def test_departure_date_stored(self):
+        it = Itinerary(
+            origin=_DELHI,
+            destinations=[_dest(_HANOI)],
+            return_city=_DELHI,
+            departure_date=date(2026, 7, 16),
+        )
+        assert it.departure_date == date(2026, 7, 16)
+
+    def test_departure_date_defaults_to_none(self):
+        it = Itinerary(
+            origin=_DELHI,
+            destinations=[_dest(_HANOI)],
+            return_city=_DELHI,
+        )
+        assert it.departure_date is None
+
+    def test_departure_date_serialization_roundtrip(self):
+        it = Itinerary(
+            origin=_DELHI,
+            destinations=[_dest(_HANOI)],
+            return_city=_DELHI,
+            departure_date=date(2026, 12, 25),
+        )
+        data = it.model_dump()
+        restored = Itinerary.model_validate(data)
+        assert restored.departure_date == date(2026, 12, 25)
