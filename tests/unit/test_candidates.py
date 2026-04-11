@@ -16,10 +16,11 @@ from optifli.engine.candidates import (
     compute_first_window,
     propagate_all_windows,
     propagate_window,
+    validate_leg_consistency,
 )
 from optifli.models.airport import CityGroup
 from optifli.models.duration import Duration
-from optifli.models.itinerary import Destination, DirectionMode
+from optifli.models.itinerary import Destination, DirectionMode, Leg
 
 pytestmark = pytest.mark.unit
 
@@ -241,3 +242,90 @@ class TestCrossTimezoneCorrectness:
         for w in windows:
             assert w.start.tzinfo is not None
             assert w.end.tzinfo is not None
+
+
+def _make_typed_leg(
+    origin_code: str,
+    dest_code: str,
+    start: datetime,
+    end: datetime,
+) -> Leg:
+    return Leg.model_validate(
+        {
+            "origin": {"name": origin_code, "airports": [origin_code]},
+            "destination": {"name": dest_code, "airports": [dest_code]},
+            "departure_window": {"start": start, "end": end},
+        }
+    )
+
+
+class TestValidateLegConsistency:
+    def test_consistent_legs_no_warnings(self):
+        legs = [
+            _make_typed_leg(
+                "DEL",
+                "HAN",
+                datetime(2026, 7, 16, 0, 0, tzinfo=UTC),
+                datetime(2026, 7, 16, 6, 0, tzinfo=UTC),
+            ),
+            _make_typed_leg(
+                "HAN",
+                "DEL",
+                datetime(2026, 7, 20, 0, 0, tzinfo=UTC),
+                datetime(2026, 7, 20, 6, 0, tzinfo=UTC),
+            ),
+        ]
+        dests = [_dest("Hanoi", "HAN", stay="2d")]
+        assert validate_leg_consistency(legs, dests) == []
+
+    def test_tight_schedule_warning(self):
+        legs = [
+            _make_typed_leg(
+                "DEL",
+                "HAN",
+                datetime(2026, 7, 16, 0, 0, tzinfo=UTC),
+                datetime(2026, 7, 16, 6, 0, tzinfo=UTC),
+            ),
+            _make_typed_leg(
+                "HAN",
+                "DEL",
+                datetime(2026, 7, 17, 0, 0, tzinfo=UTC),
+                datetime(2026, 7, 17, 6, 0, tzinfo=UTC),
+            ),
+        ]
+        dests = [_dest("Hanoi", "HAN", stay="2d")]
+        warnings = validate_leg_consistency(legs, dests)
+        assert len(warnings) == 1
+        assert "shorter than stay + travel estimate" in warnings[0]
+
+    def test_overlapping_legs_warning(self):
+        legs = [
+            _make_typed_leg(
+                "DEL",
+                "HAN",
+                datetime(2026, 7, 16, 0, 0, tzinfo=UTC),
+                datetime(2026, 7, 16, 12, 0, tzinfo=UTC),
+            ),
+            _make_typed_leg(
+                "HAN",
+                "DEL",
+                datetime(2026, 7, 16, 6, 0, tzinfo=UTC),
+                datetime(2026, 7, 16, 18, 0, tzinfo=UTC),
+            ),
+        ]
+        dests = [_dest("Hanoi", "HAN", stay="2d")]
+        warnings = validate_leg_consistency(legs, dests)
+        assert len(warnings) == 1
+        assert "overlapping" in warnings[0]
+
+    def test_single_leg_no_warnings(self):
+        legs = [
+            _make_typed_leg(
+                "DEL",
+                "HAN",
+                datetime(2026, 7, 16, 0, 0, tzinfo=UTC),
+                datetime(2026, 7, 16, 6, 0, tzinfo=UTC),
+            ),
+        ]
+        dests = [_dest("Hanoi", "HAN")]
+        assert validate_leg_consistency(legs, dests) == []
