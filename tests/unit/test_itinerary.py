@@ -75,6 +75,7 @@ class TestDirectionModeInItinerary:
             destinations=[_dest(_HANOI)],
             return_city=_DELHI,
             direction="FORWARD",
+            departure_date=date(2026, 7, 16),
         )
         assert it.direction is DirectionMode.FORWARD
 
@@ -84,6 +85,7 @@ class TestDirectionModeInItinerary:
             destinations=[_dest(_HANOI)],
             return_city=_DELHI,
             direction="Both",
+            departure_date=date(2026, 7, 16),
         )
         assert it.direction is DirectionMode.BOTH
 
@@ -113,6 +115,7 @@ class TestRouteModeInItinerary:
             destinations=[_dest(_HANOI)],
             return_city=_DELHI,
             route_mode="REORDER",
+            departure_date=date(2026, 7, 16),
         )
         assert it.route_mode is RouteMode.REORDER
 
@@ -291,6 +294,7 @@ class TestItineraryValid:
             origin=_DELHI,
             destinations=[_dest(_HANOI)],
             return_city=_DELHI,
+            departure_date=date(2026, 7, 16),
         )
         assert len(it.destinations) == 1
         assert it.direction is DirectionMode.FORWARD
@@ -302,6 +306,7 @@ class TestItineraryValid:
             origin=_DELHI,
             destinations=[_dest(_HANOI), _dest(_DANANG, "1.5d")],
             return_city=_DELHI,
+            departure_date=date(2026, 7, 16),
         )
         assert len(it.destinations) == 2
 
@@ -311,6 +316,7 @@ class TestItineraryValid:
             origin=_DELHI,
             destinations=dests,
             return_city=_DELHI,
+            departure_date=date(2026, 7, 16),
         )
         assert len(it.destinations) == 10
 
@@ -319,6 +325,7 @@ class TestItineraryValid:
             origin=_DELHI,
             destinations=[_dest(_HANOI)],
             return_city=_DANANG,
+            departure_date=date(2026, 7, 16),
         )
         assert it.origin.name == "Delhi"
         assert it.return_city.name == "Da Nang"
@@ -330,6 +337,7 @@ class TestItineraryValid:
             return_city=_DELHI,
             direction="both",
             route_mode="reorder",
+            departure_date=date(2026, 7, 16),
         )
         assert it.direction is DirectionMode.BOTH
         assert it.route_mode is RouteMode.REORDER

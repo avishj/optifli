@@ -3,5 +3,6 @@
   "destinations": [
     { "city": { "name": "Hanoi", "include": ["HAN"] }, "stay": "2d" }
   ],
-  "return_city": { "name": "Delhi", "include": ["DEL"] }
+  "return_city": { "name": "Delhi", "include": ["DEL"] },
+  "departure_date": "2026-07-16"
 }

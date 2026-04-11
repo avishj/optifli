@@ -4,6 +4,8 @@
 
 """Unit tests for reverse-mode duration remap logic."""
 
+from datetime import date
+
 import pytest
 
 from optifli.models.duration import Duration
@@ -26,6 +28,7 @@ def _make_itinerary(destinations):
         origin=_DELHI,
         destinations=destinations,
         return_city=_DELHI,
+        departure_date=date(2026, 7, 16),
     )
 
 

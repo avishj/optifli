@@ -4,6 +4,7 @@
 
 """Interactive itinerary collection for the CLI."""
 
+from datetime import date
 from itertools import pairwise
 
 from pydantic import ValidationError
@@ -190,6 +191,8 @@ def _collect() -> Itinerary:
         else:
             route_mode = RouteMode.FIXED
 
+    departure_date = date.today() if not legs else None
+
     return Itinerary(
         origin=origin,
         destinations=destinations,
@@ -197,6 +200,7 @@ def _collect() -> Itinerary:
         direction=direction,
         route_mode=route_mode,
         legs=legs,
+        departure_date=departure_date,
     )
 
 

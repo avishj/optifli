@@ -23,6 +23,7 @@ def _write_profile(path, direction):
         "return_city": {"name": "Delhi", "include": ["DEL"]},
         "direction": direction,
         "route_mode": "fixed",
+        "departure_date": "2026-07-16",
     }
     path.write_text(json.dumps(data), encoding="utf-8")
 
