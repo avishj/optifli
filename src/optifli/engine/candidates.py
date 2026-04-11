@@ -158,3 +158,44 @@ def propagate_all_windows(
             propagate_window(windows[-1], stay, travel_estimate, window_width),
         )
     return windows
+
+
+def validate_leg_consistency(
+    legs: list[Leg],
+    destinations: list[Destination],
+    travel_estimate: timedelta = _DEFAULT_TRAVEL_ESTIMATE,
+) -> list[str]:
+    """Check user-provided legs for scheduling consistency.
+
+    Returns a list of warning strings (not errors — user windows take
+    precedence).  An empty list means no warnings.
+
+    Warnings are emitted when the gap between one leg's end and the next
+    leg's start is shorter than the expected stay + travel time, or when
+    legs overlap.
+
+    Args:
+        legs: User-provided legs with explicit departure windows.
+        destinations: The ordered destinations (used for stay durations).
+        travel_estimate: Estimated travel time per leg.
+
+    Returns:
+        A list of warning strings (empty if consistent).
+    """
+    warnings: list[str] = []
+    for i in range(len(legs) - 1):
+        gap = legs[i + 1].departure_window.start - legs[i].departure_window.end
+        if i < len(destinations):
+            required = travel_estimate + destinations[i].stay.timedelta
+        else:
+            required = travel_estimate
+        if gap < timedelta(0):
+            warnings.append(
+                f"Leg {i + 1} and leg {i + 2} have overlapping departure windows",
+            )
+        elif gap < required:
+            warnings.append(
+                f"Gap between leg {i + 1} and leg {i + 2} "
+                f"({gap}) is shorter than stay + travel estimate ({required})",
+            )
+    return warnings
