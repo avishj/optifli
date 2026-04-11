@@ -9,8 +9,9 @@ from datetime import UTC, datetime
 import pytest
 from pydantic import ValidationError
 
-from optifli.engine.candidates import RouteCandidate
-from optifli.models.itinerary import DirectionMode
+from optifli.engine.candidates import RouteCandidate, build_leg_sequence
+from optifli.models.airport import CityGroup
+from optifli.models.itinerary import Destination, DirectionMode
 
 pytestmark = pytest.mark.unit
 
@@ -61,3 +62,51 @@ class TestRouteCandidateValidation:
     def test_reject_empty_legs(self):
         with pytest.raises(ValidationError, match="non-empty"):
             _make_candidate(legs=[])
+
+
+def _city(name: str, code: str) -> CityGroup:
+    return CityGroup.model_validate({"name": name, "airports": [code]})
+
+
+def _dest(name: str, code: str, stay: str = "2d") -> Destination:
+    return Destination(city=_city(name, code), stay=stay)
+
+
+class TestBuildLegSequence:
+    def test_single_destination(self):
+        origin = _city("Delhi", "DEL")
+        dests = [_dest("Hanoi", "HAN")]
+        ret = _city("Delhi", "DEL")
+        pairs = build_leg_sequence(origin, dests, ret)
+        assert len(pairs) == 2
+        assert pairs[0][0].airports == ["DEL"]
+        assert pairs[0][1].airports == ["HAN"]
+        assert pairs[1][0].airports == ["HAN"]
+        assert pairs[1][1].airports == ["DEL"]
+
+    def test_three_destinations(self):
+        origin = _city("Delhi", "DEL")
+        dests = [
+            _dest("Hanoi", "HAN"),
+            _dest("Da Nang", "DAD"),
+            _dest("Singapore", "SIN"),
+        ]
+        ret = _city("Delhi", "DEL")
+        pairs = build_leg_sequence(origin, dests, ret)
+        assert len(pairs) == 4
+        assert [p[0].airports[0] for p in pairs] == ["DEL", "HAN", "DAD", "SIN"]
+        assert [p[1].airports[0] for p in pairs] == ["HAN", "DAD", "SIN", "DEL"]
+
+    def test_origin_equals_return(self):
+        origin = _city("Delhi", "DEL")
+        dests = [_dest("Hanoi", "HAN")]
+        pairs = build_leg_sequence(origin, dests, origin)
+        assert pairs[0][0].airports == pairs[-1][1].airports
+
+    def test_origin_differs_from_return(self):
+        origin = _city("Delhi", "DEL")
+        dests = [_dest("Hanoi", "HAN")]
+        ret = _city("Singapore", "SIN")
+        pairs = build_leg_sequence(origin, dests, ret)
+        assert pairs[0][0].airports == ["DEL"]
+        assert pairs[-1][1].airports == ["SIN"]

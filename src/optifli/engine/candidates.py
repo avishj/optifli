@@ -4,6 +4,7 @@
 
 """Route candidate generation."""
 
+from itertools import pairwise
 from typing import Self
 
 from pydantic import BaseModel, ConfigDict, model_validator
@@ -44,3 +45,29 @@ class RouteCandidate(BaseModel, frozen=True):
             msg = "'legs' must be non-empty"
             raise ValueError(msg)
         return self
+
+
+def build_leg_sequence(
+    origin: CityGroup,
+    destinations: list[Destination],
+    return_city: CityGroup,
+) -> list[tuple[CityGroup, CityGroup]]:
+    """Generate ordered (origin, destination) city-group pairs for a fixed-order route.
+
+    For destinations ``[A, B, C]`` with origin *O* and return *R* the result is
+    ``[(O, A), (A, B), (B, C), (C, R)]``.
+
+    Args:
+        origin: Starting city group.
+        destinations: Ordered destinations to visit.
+        return_city: City to return to at the end.
+
+    Returns:
+        A list of ``(from, to)`` city-group pairs.
+    """
+    stops: list[CityGroup] = [
+        origin,
+        *(dest.city for dest in destinations),
+        return_city,
+    ]
+    return list(pairwise(stops))
