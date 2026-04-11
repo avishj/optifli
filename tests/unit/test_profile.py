@@ -5,6 +5,7 @@
 """Unit tests for JSON profile loading."""
 
 import json
+from datetime import date
 from pathlib import Path
 
 import pytest
@@ -27,6 +28,7 @@ class TestLoadProfileValid:
         assert it.direction is DirectionMode.FORWARD
         assert it.route_mode is RouteMode.FIXED
         assert it.legs == []
+        assert it.departure_date == date(2026, 7, 16)
 
     def test_full(self, profiles_dir):
         it = load_profile(profiles_dir / "full.json")
@@ -38,6 +40,7 @@ class TestLoadProfileValid:
         assert len(it.legs) == 1
         assert it.legs[0].origin.airports == ["DEL"]
         assert it.legs[0].destination.airports == ["HAN"]
+        assert it.departure_date is None
 
     def test_uppercase_enums(self, profiles_dir):
         it = load_profile(profiles_dir / "uppercase_enums.json")
@@ -141,6 +144,19 @@ class TestLoadProfileValidationErrors:
             "return_city": {"name": "Delhi", "include": ["DEL"]},
         }
         p = tmp_path / "extra_nested.json"
+        p.write_text(json.dumps(data), encoding="utf-8")
+        with pytest.raises(ProfileError, match="validation failed"):
+            load_profile(p)
+
+    def test_no_legs_no_departure_date(self, tmp_path):
+        data = {
+            "origin": {"name": "Delhi", "include": ["DEL"]},
+            "destinations": [
+                {"city": {"name": "Hanoi", "include": ["HAN"]}, "stay": "2d"},
+            ],
+            "return_city": {"name": "Delhi", "include": ["DEL"]},
+        }
+        p = tmp_path / "no_date.json"
         p.write_text(json.dumps(data), encoding="utf-8")
         with pytest.raises(ProfileError, match="validation failed"):
             load_profile(p)
