@@ -122,3 +122,39 @@ def propagate_window(
     """
     start = previous_window.start + travel_estimate + stay.timedelta
     return DepartureWindow(start=start, end=start + window_width)
+
+
+def propagate_all_windows(
+    departure_date: date,
+    stays: list[Duration],
+    leg_count: int,
+    travel_estimate: timedelta = _DEFAULT_TRAVEL_ESTIMATE,
+    window_width: timedelta = _DEFAULT_WINDOW_WIDTH,
+) -> list[DepartureWindow]:
+    """Propagate departure windows for all legs from a trip start date.
+
+    The first window is computed from *departure_date*; each subsequent window
+    is derived from the previous one plus a stay duration and travel estimate.
+
+    ``stays`` has one entry per destination (N destinations produce N+1 legs).
+    The final leg (return) has no preceding stay.
+
+    Args:
+        departure_date: Trip start date.
+        stays: Stay duration at each destination.
+        leg_count: Total number of legs to generate windows for.
+        travel_estimate: Estimated travel time per leg.
+        window_width: Width of each departure window.
+
+    Returns:
+        A list of exactly *leg_count* ``DepartureWindow`` objects.
+    """
+    windows: list[DepartureWindow] = [
+        compute_first_window(departure_date, window_width),
+    ]
+    for i in range(1, leg_count):
+        stay = stays[i - 1]
+        windows.append(
+            propagate_window(windows[-1], stay, travel_estimate, window_width),
+        )
+    return windows
