@@ -11,8 +11,12 @@ from typing import Self
 from pydantic import BaseModel, ConfigDict, model_validator
 
 from optifli.models.airport import CityGroup
+from optifli.models.duration import Duration
 from optifli.models.itinerary import Destination, DirectionMode, Leg
 from optifli.models.window import DepartureWindow
+
+_DEFAULT_TRAVEL_ESTIMATE = timedelta(hours=6)
+_DEFAULT_WINDOW_WIDTH = timedelta(hours=24)
 
 
 class RouteCandidate(BaseModel, frozen=True):
@@ -77,7 +81,7 @@ def build_leg_sequence(
 
 def compute_first_window(
     departure_date: date,
-    window_width: timedelta = timedelta(hours=24),
+    window_width: timedelta = _DEFAULT_WINDOW_WIDTH,
 ) -> DepartureWindow:
     """Compute the departure window for the first leg from a calendar date.
 
@@ -94,4 +98,27 @@ def compute_first_window(
         departure_date.day,
         tzinfo=UTC,
     )
+    return DepartureWindow(start=start, end=start + window_width)
+
+
+def propagate_window(
+    previous_window: DepartureWindow,
+    stay: Duration,
+    travel_estimate: timedelta = _DEFAULT_TRAVEL_ESTIMATE,
+    window_width: timedelta = _DEFAULT_WINDOW_WIDTH,
+) -> DepartureWindow:
+    """Compute the departure window for a subsequent leg.
+
+    Next window start = ``previous_window.start + travel_estimate + stay``.
+
+    Args:
+        previous_window: The departure window of the preceding leg.
+        stay: How long to stay at the preceding destination.
+        travel_estimate: Estimated travel time for the preceding leg.
+        window_width: Width of the new departure window.
+
+    Returns:
+        A TZ-aware ``DepartureWindow`` for the next leg.
+    """
+    start = previous_window.start + travel_estimate + stay.timedelta
     return DepartureWindow(start=start, end=start + window_width)
