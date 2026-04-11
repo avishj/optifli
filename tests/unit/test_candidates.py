@@ -5,6 +5,7 @@
 """Unit tests for route candidate generation."""
 
 from datetime import UTC, date, datetime, timedelta
+from zoneinfo import ZoneInfo
 
 import pytest
 from pydantic import ValidationError
@@ -210,3 +211,33 @@ class TestPropagateAllWindows:
         a = propagate_all_windows(date(2026, 7, 16), stays, leg_count=3)
         b = propagate_all_windows(date(2026, 7, 16), stays, leg_count=3)
         assert a == b
+
+
+class TestCrossTimezoneCorrectness:
+    """Verify UTC-canonical propagation doesn't drift across timezone conversions."""
+
+    def test_round_trip_asia_kolkata(self):
+        stays = [Duration.model_validate("2d")]
+        windows = propagate_all_windows(date(2026, 7, 16), stays, leg_count=2)
+        kolkata = ZoneInfo("Asia/Kolkata")
+        for w in windows:
+            local_start = w.start.astimezone(kolkata)
+            back_to_utc = local_start.astimezone(UTC)
+            assert back_to_utc == w.start
+
+    def test_dst_transition_no_drift(self):
+        # 2026-03-08 is US spring-forward day (EST→EDT at 02:00)
+        stays = [Duration.model_validate("1d")]
+        windows = propagate_all_windows(date(2026, 3, 8), stays, leg_count=2)
+        eastern = ZoneInfo("US/Eastern")
+        for w in windows:
+            local_start = w.start.astimezone(eastern)
+            back_to_utc = local_start.astimezone(UTC)
+            assert back_to_utc == w.start
+
+    def test_all_windows_tz_aware(self):
+        stays = [Duration.model_validate("2d"), Duration.model_validate("1d")]
+        windows = propagate_all_windows(date(2026, 7, 16), stays, leg_count=3)
+        for w in windows:
+            assert w.start.tzinfo is not None
+            assert w.end.tzinfo is not None
