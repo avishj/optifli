@@ -13,8 +13,10 @@ from optifli.engine.candidates import (
     RouteCandidate,
     build_leg_sequence,
     compute_first_window,
+    propagate_window,
 )
 from optifli.models.airport import CityGroup
+from optifli.models.duration import Duration
 from optifli.models.itinerary import Destination, DirectionMode
 
 pytestmark = pytest.mark.unit
@@ -132,3 +134,39 @@ class TestComputeFirstWindow:
         assert w.start.tzinfo is not None
         assert w.end.tzinfo is not None
         assert w.start < w.end
+
+
+class TestPropagateWindow:
+    def _first(self):
+        return compute_first_window(date(2026, 7, 16))
+
+    def test_basic_2d_stay(self):
+        first = self._first()
+        stay = Duration.model_validate("2d")
+        w = propagate_window(first, stay)
+        # 0h (start) + 6h travel + 48h stay = 54h offset
+        expected_start = datetime(2026, 7, 16, 0, 0, tzinfo=UTC) + timedelta(hours=54)
+        assert w.start == expected_start
+        assert w.end == expected_start + timedelta(hours=24)
+
+    def test_fractional_stay(self):
+        first = self._first()
+        stay = Duration.model_validate("0.5d")
+        w = propagate_window(first, stay)
+        # 6h travel + 12h stay = 18h offset
+        expected_start = datetime(2026, 7, 16, 0, 0, tzinfo=UTC) + timedelta(hours=18)
+        assert w.start == expected_start
+
+    def test_custom_travel_estimate(self):
+        first = self._first()
+        stay = Duration.model_validate("2d")
+        w = propagate_window(first, stay, travel_estimate=timedelta(hours=12))
+        # 12h travel + 48h stay = 60h offset
+        expected_start = datetime(2026, 7, 16, 0, 0, tzinfo=UTC) + timedelta(hours=60)
+        assert w.start == expected_start
+
+    def test_custom_window_width(self):
+        first = self._first()
+        stay = Duration.model_validate("2d")
+        w = propagate_window(first, stay, window_width=timedelta(hours=12))
+        assert w.end - w.start == timedelta(hours=12)
