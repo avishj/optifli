@@ -433,3 +433,45 @@ class TestDepartureDateRequired:
             departure_date=date(2026, 7, 16),
         )
         assert it.departure_date == date(2026, 7, 16)
+
+
+class TestReorderLegsExclusive:
+    def test_reorder_empty_legs_valid(self):
+        it = Itinerary(
+            origin=_DELHI,
+            destinations=[_dest(_HANOI)],
+            return_city=_DELHI,
+            route_mode="reorder",
+            departure_date=date(2026, 7, 16),
+        )
+        assert it.route_mode is RouteMode.REORDER
+
+    def test_reorder_with_legs_rejected(self):
+        with pytest.raises(ValidationError, match="cannot be 'reorder'"):
+            Itinerary(
+                origin=_DELHI,
+                destinations=[_dest(_HANOI)],
+                return_city=_DELHI,
+                route_mode="reorder",
+                legs=[_make_leg()],
+            )
+
+    def test_fixed_with_legs_valid(self):
+        it = Itinerary(
+            origin=_DELHI,
+            destinations=[_dest(_HANOI)],
+            return_city=_DELHI,
+            route_mode="fixed",
+            legs=[_make_leg()],
+        )
+        assert it.route_mode is RouteMode.FIXED
+
+    def test_fixed_empty_legs_valid(self):
+        it = Itinerary(
+            origin=_DELHI,
+            destinations=[_dest(_HANOI)],
+            return_city=_DELHI,
+            route_mode="fixed",
+            departure_date=date(2026, 7, 16),
+        )
+        assert it.route_mode is RouteMode.FIXED

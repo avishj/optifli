@@ -128,3 +128,10 @@ class Itinerary(BaseModel, frozen=True):
             msg = "'departure_date' is required when no explicit legs are provided"
             raise ValueError(msg)
         return self
+
+    @model_validator(mode="after")
+    def _validate_reorder_no_legs(self) -> Self:
+        if self.route_mode is RouteMode.REORDER and self.legs:
+            msg = "'route_mode' cannot be 'reorder' when explicit legs are provided"
+            raise ValueError(msg)
+        return self
