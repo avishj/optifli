@@ -29,5 +29,8 @@ def expand_directions(
     if itinerary.direction is DirectionMode.REVERSE:
         return [(DirectionMode.REVERSE, remap_for_reverse(itinerary))]
 
-    msg = f"Direction mode {itinerary.direction!r} not yet supported"
-    raise NotImplementedError(msg)
+    # BOTH → forward first, then reverse
+    return [
+        (DirectionMode.FORWARD, list(itinerary.destinations)),
+        (DirectionMode.REVERSE, remap_for_reverse(itinerary)),
+    ]
