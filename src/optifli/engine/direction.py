@@ -5,6 +5,7 @@
 """Direction expansion for itinerary routing."""
 
 from optifli.models.itinerary import Destination, DirectionMode, Itinerary
+from optifli.models.remap import remap_for_reverse
 
 
 def expand_directions(
@@ -24,6 +25,9 @@ def expand_directions(
     """
     if itinerary.direction is DirectionMode.FORWARD:
         return [(DirectionMode.FORWARD, list(itinerary.destinations))]
+
+    if itinerary.direction is DirectionMode.REVERSE:
+        return [(DirectionMode.REVERSE, remap_for_reverse(itinerary))]
 
     msg = f"Direction mode {itinerary.direction!r} not yet supported"
     raise NotImplementedError(msg)
