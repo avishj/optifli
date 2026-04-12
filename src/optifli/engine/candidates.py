@@ -10,9 +10,10 @@ from typing import Self
 
 from pydantic import BaseModel, ConfigDict, model_validator
 
+from optifli.engine.direction import expand_directions
 from optifli.models.airport import CityGroup
 from optifli.models.duration import Duration
-from optifli.models.itinerary import Destination, DirectionMode, Leg
+from optifli.models.itinerary import Destination, DirectionMode, Itinerary, Leg
 from optifli.models.window import DepartureWindow
 
 _DEFAULT_TRAVEL_ESTIMATE = timedelta(hours=6)
@@ -199,3 +200,65 @@ def validate_leg_consistency(
                 f"({gap}) is shorter than stay + travel estimate ({required})",
             )
     return warnings
+
+
+def generate_candidates(
+    itinerary: Itinerary,
+    travel_estimate: timedelta = _DEFAULT_TRAVEL_ESTIMATE,
+    window_width: timedelta = _DEFAULT_WINDOW_WIDTH,
+) -> list[RouteCandidate]:
+    """Generate route candidates from an itinerary.
+
+    Wires direction expansion, leg sequence building, and date propagation
+    into ``RouteCandidate`` output.  When the itinerary carries explicit legs
+    they are used directly; otherwise windows are propagated from
+    ``departure_date``.
+
+    Args:
+        itinerary: The itinerary to generate candidates for.
+        travel_estimate: Estimated travel time per leg.
+        window_width: Width of each departure window.
+
+    Returns:
+        A list of ``RouteCandidate`` objects (one per concrete direction).
+    """
+    expanded = expand_directions(itinerary)
+    candidates: list[RouteCandidate] = []
+
+    for direction, destinations in expanded:
+        if itinerary.legs:
+            legs = list(itinerary.legs)
+        else:
+            pairs = build_leg_sequence(
+                itinerary.origin,
+                destinations,
+                itinerary.return_city,
+            )
+            stays = [d.stay for d in destinations]
+            windows = propagate_all_windows(
+                itinerary.departure_date,  # type: ignore[arg-type]
+                stays,
+                leg_count=len(pairs),
+                travel_estimate=travel_estimate,
+                window_width=window_width,
+            )
+            legs = [
+                Leg(
+                    origin=orig,
+                    destination=dest,
+                    departure_window=window,
+                )
+                for (orig, dest), window in zip(pairs, windows, strict=True)
+            ]
+
+        candidates.append(
+            RouteCandidate(
+                direction=direction,
+                origin=itinerary.origin,
+                destinations=destinations,
+                return_city=itinerary.return_city,
+                legs=legs,
+            ),
+        )
+
+    return candidates
