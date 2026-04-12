@@ -1,0 +1,10 @@
+{
+  "origin": { "name": "Delhi", "include": ["DEL"] },
+  "destinations": [
+    { "city": { "name": "Hanoi", "include": ["HAN"] }, "stay": "2d" },
+    { "city": { "name": "Da Nang", "include": ["DAD"] }, "stay": "1d" }
+  ],
+  "return_city": { "name": "Delhi", "include": ["DEL"] },
+  "direction": "both",
+  "departure_date": "2026-07-16"
+}

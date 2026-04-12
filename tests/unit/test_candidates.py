@@ -14,6 +14,7 @@ from optifli.engine.candidates import (
     RouteCandidate,
     build_leg_sequence,
     compute_first_window,
+    generate_candidates,
     propagate_all_windows,
     propagate_window,
     validate_leg_consistency,
@@ -21,6 +22,7 @@ from optifli.engine.candidates import (
 from optifli.models.airport import CityGroup
 from optifli.models.duration import Duration
 from optifli.models.itinerary import Destination, DirectionMode, Leg
+from optifli.profile import load_profile
 
 pytestmark = pytest.mark.unit
 
@@ -329,3 +331,48 @@ class TestValidateLegConsistency:
         ]
         dests = [_dest("Hanoi", "HAN")]
         assert validate_leg_consistency(legs, dests) == []
+
+
+class TestGenerateCandidates:
+    def test_forward_no_legs(self, profiles_dir):
+        it = load_profile(profiles_dir / "minimal.json")
+        candidates = generate_candidates(it)
+        assert len(candidates) == 1
+        rc = candidates[0]
+        assert rc.direction is DirectionMode.FORWARD
+        assert len(rc.legs) == 2
+        assert rc.legs[0].origin.airports == ["DEL"]
+        assert rc.legs[0].destination.airports == ["HAN"]
+        assert rc.legs[1].origin.airports == ["HAN"]
+        assert rc.legs[1].destination.airports == ["DEL"]
+
+    def test_reverse_no_legs(self, profiles_dir):
+        it = load_profile(profiles_dir / "reverse.json")
+        candidates = generate_candidates(it)
+        assert len(candidates) == 1
+        rc = candidates[0]
+        assert rc.direction is DirectionMode.REVERSE
+        cities = [leg.destination.airports[0] for leg in rc.legs]
+        assert cities[0] == "DAD"
+        assert cities[1] == "HAN"
+
+    def test_both_no_legs(self, profiles_dir):
+        it = load_profile(profiles_dir / "both.json")
+        candidates = generate_candidates(it)
+        assert len(candidates) == 2
+        directions = {c.direction for c in candidates}
+        assert directions == {DirectionMode.FORWARD, DirectionMode.REVERSE}
+
+    def test_forward_explicit_legs(self, profiles_dir):
+        it = load_profile(profiles_dir / "full.json")
+        candidates = generate_candidates(it)
+        assert len(candidates) == 2
+        for rc in candidates:
+            assert rc.legs[0].departure_window.start is not None
+
+    def test_propagated_windows_are_tz_aware(self, profiles_dir):
+        it = load_profile(profiles_dir / "minimal.json")
+        candidates = generate_candidates(it)
+        for leg in candidates[0].legs:
+            assert leg.departure_window.start.tzinfo is not None
+            assert leg.departure_window.end.tzinfo is not None
