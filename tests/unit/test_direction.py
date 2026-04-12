@@ -51,3 +51,30 @@ class TestExpandDirectionsForward:
         result = expand_directions(it)
         stays = [d.stay.total_days for d in result[0][1]]
         assert stays == [1.0, 3.0]
+
+
+class TestExpandDirectionsReverse:
+    def test_reversed_order(self):
+        it = _make_itinerary(
+            [_dest(_HANOI), _dest(_DANANG), _dest(_SINGAPORE)],
+            direction=DirectionMode.REVERSE,
+        )
+        result = expand_directions(it)
+        assert len(result) == 1
+        assert result[0][0] is DirectionMode.REVERSE
+        cities = [d.city.airports[0] for d in result[0][1]]
+        assert cities == ["SIN", "DAD", "HAN"]
+
+    def test_durations_stay_with_cities(self):
+        it = _make_itinerary(
+            [_dest(_HANOI, "1d"), _dest(_DANANG, "2d"), _dest(_SINGAPORE, "3d")],
+            direction=DirectionMode.REVERSE,
+        )
+        result = expand_directions(it)
+        pairs = [(d.city.airports[0], d.stay.total_days) for d in result[0][1]]
+        assert pairs == [("SIN", 3.0), ("DAD", 2.0), ("HAN", 1.0)]
+
+    def test_single_destination_same_as_forward(self):
+        it = _make_itinerary([_dest(_HANOI)], direction=DirectionMode.REVERSE)
+        result = expand_directions(it)
+        assert result[0][1][0].city.airports == ["HAN"]
