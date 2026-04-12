@@ -100,7 +100,15 @@ class TestOptimizeWizard:
     def test_single_destination_renders_itinerary(self, invoke, monkeypatch):
         _patch_prompts(
             monkeypatch,
-            prompt_answers=["del", "han", "2d", "del", "forward", "fixed"],
+            prompt_answers=[
+                "del",
+                "han",
+                "2d",
+                "del",
+                "forward",
+                "fixed",
+                "2026-07-16",
+            ],
             confirm_answers=[False, False],
         )
 
@@ -125,6 +133,7 @@ class TestOptimizeWizard:
                 "del",
                 "forward",
                 "fixed",
+                "2026-07-16",
             ],
             confirm_answers=[True, False, False],
         )
@@ -172,6 +181,7 @@ class TestOptimizeWizard:
                 "del",
                 "reverse",
                 "fixed",
+                "2026-07-16",
             ],
             confirm_answers=[True, False, False],
         )
@@ -197,6 +207,7 @@ class TestOptimizeWizard:
                 "del",
                 "both",
                 "fixed",
+                "2026-07-16",
             ],
             confirm_answers=[True, False, False],
         )
