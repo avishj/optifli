@@ -5,6 +5,7 @@
 """Unit tests for itinerary models."""
 
 from datetime import UTC, date, datetime
+from pathlib import Path
 
 import pytest
 from pydantic import ValidationError
@@ -16,6 +17,7 @@ from optifli.models.itinerary import (
     Leg,
     RouteMode,
 )
+from optifli.profile import load_profile
 
 pytestmark = pytest.mark.unit
 
@@ -289,25 +291,15 @@ class TestLegNestedValidation:
 
 
 class TestItineraryValid:
-    def test_single_destination(self):
-        it = Itinerary(
-            origin=_DELHI,
-            destinations=[_dest(_HANOI)],
-            return_city=_DELHI,
-            departure_date=date(2026, 7, 16),
-        )
+    def test_single_destination(self, profiles_dir: Path):
+        it = load_profile(profiles_dir / "minimal.json")
         assert len(it.destinations) == 1
         assert it.direction is DirectionMode.FORWARD
         assert it.route_mode is RouteMode.FIXED
         assert it.legs == []
 
-    def test_multiple_destinations(self):
-        it = Itinerary(
-            origin=_DELHI,
-            destinations=[_dest(_HANOI), _dest(_DANANG, "1.5d")],
-            return_city=_DELHI,
-            departure_date=date(2026, 7, 16),
-        )
+    def test_multiple_destinations(self, profiles_dir: Path):
+        it = load_profile(profiles_dir / "both.json")
         assert len(it.destinations) == 2
 
     def test_ten_destinations(self):
@@ -320,15 +312,10 @@ class TestItineraryValid:
         )
         assert len(it.destinations) == 10
 
-    def test_origin_differs_from_return(self):
-        it = Itinerary(
-            origin=_DELHI,
-            destinations=[_dest(_HANOI)],
-            return_city=_DANANG,
-            departure_date=date(2026, 7, 16),
-        )
+    def test_origin_differs_from_return(self, profiles_dir: Path):
+        it = load_profile(profiles_dir / "diff_return_city.json")
         assert it.origin.name == "Delhi"
-        assert it.return_city.name == "Da Nang"
+        assert it.return_city.name == "Singapore"
 
     def test_explicit_direction_and_route(self):
         it = Itinerary(
@@ -375,13 +362,8 @@ def _make_leg():
 
 
 class TestDepartureDate:
-    def test_departure_date_stored(self):
-        it = Itinerary(
-            origin=_DELHI,
-            destinations=[_dest(_HANOI)],
-            return_city=_DELHI,
-            departure_date=date(2026, 7, 16),
-        )
+    def test_departure_date_stored(self, profiles_dir: Path):
+        it = load_profile(profiles_dir / "minimal.json")
         assert it.departure_date == date(2026, 7, 16)
 
     def test_departure_date_defaults_to_none_with_legs(self):
@@ -393,43 +375,28 @@ class TestDepartureDate:
         )
         assert it.departure_date is None
 
-    def test_departure_date_serialization_roundtrip(self):
-        it = Itinerary(
-            origin=_DELHI,
-            destinations=[_dest(_HANOI)],
-            return_city=_DELHI,
-            departure_date=date(2026, 12, 25),
-        )
+    def test_departure_date_serialization_roundtrip(self, profiles_dir: Path):
+        it = load_profile(profiles_dir / "minimal.json")
         data = it.model_dump()
         restored = Itinerary.model_validate(data)
-        assert restored.departure_date == date(2026, 12, 25)
+        assert restored.departure_date == date(2026, 7, 16)
 
 
 class TestDepartureDateRequired:
     def test_no_legs_no_date_rejected(self):
-        with pytest.raises(ValidationError, match="departure_date.*required"):
+        with pytest.raises(ValidationError, match=r"departure_date.*required"):
             Itinerary(
                 origin=_DELHI,
                 destinations=[_dest(_HANOI)],
                 return_city=_DELHI,
             )
 
-    def test_no_legs_with_date_valid(self):
-        it = Itinerary(
-            origin=_DELHI,
-            destinations=[_dest(_HANOI)],
-            return_city=_DELHI,
-            departure_date=date(2026, 7, 16),
-        )
+    def test_no_legs_with_date_valid(self, profiles_dir: Path):
+        it = load_profile(profiles_dir / "minimal.json")
         assert it.departure_date == date(2026, 7, 16)
 
-    def test_legs_without_date_valid(self):
-        it = Itinerary(
-            origin=_DELHI,
-            destinations=[_dest(_HANOI)],
-            return_city=_DELHI,
-            legs=[_make_leg()],
-        )
+    def test_legs_without_date_valid(self, profiles_dir: Path):
+        it = load_profile(profiles_dir / "full.json")
         assert it.departure_date is None
 
     def test_legs_with_date_valid(self):
@@ -464,22 +431,10 @@ class TestReorderLegsExclusive:
                 legs=[_make_leg()],
             )
 
-    def test_fixed_with_legs_valid(self):
-        it = Itinerary(
-            origin=_DELHI,
-            destinations=[_dest(_HANOI)],
-            return_city=_DELHI,
-            route_mode="fixed",
-            legs=[_make_leg()],
-        )
+    def test_fixed_with_legs_valid(self, profiles_dir: Path):
+        it = load_profile(profiles_dir / "full.json")
         assert it.route_mode is RouteMode.FIXED
 
-    def test_fixed_empty_legs_valid(self):
-        it = Itinerary(
-            origin=_DELHI,
-            destinations=[_dest(_HANOI)],
-            return_city=_DELHI,
-            route_mode="fixed",
-            departure_date=date(2026, 7, 16),
-        )
+    def test_fixed_empty_legs_valid(self, profiles_dir: Path):
+        it = load_profile(profiles_dir / "minimal.json")
         assert it.route_mode is RouteMode.FIXED
