@@ -78,3 +78,42 @@ class TestExpandDirectionsReverse:
         it = _make_itinerary([_dest(_HANOI)], direction=DirectionMode.REVERSE)
         result = expand_directions(it)
         assert result[0][1][0].city.airports == ["HAN"]
+
+
+class TestExpandDirectionsBoth:
+    def test_two_entries(self):
+        it = _make_itinerary(
+            [_dest(_HANOI), _dest(_DANANG)],
+            direction=DirectionMode.BOTH,
+        )
+        result = expand_directions(it)
+        assert len(result) == 2
+
+    def test_contains_forward_and_reverse(self):
+        it = _make_itinerary(
+            [_dest(_HANOI), _dest(_DANANG)],
+            direction=DirectionMode.BOTH,
+        )
+        result = expand_directions(it)
+        directions = {r[0] for r in result}
+        assert directions == {DirectionMode.FORWARD, DirectionMode.REVERSE}
+
+    def test_forward_has_original_order(self):
+        it = _make_itinerary(
+            [_dest(_HANOI), _dest(_DANANG)],
+            direction=DirectionMode.BOTH,
+        )
+        result = expand_directions(it)
+        fwd = next(r for r in result if r[0] is DirectionMode.FORWARD)
+        cities = [d.city.airports[0] for d in fwd[1]]
+        assert cities == ["HAN", "DAD"]
+
+    def test_reverse_has_reversed_order(self):
+        it = _make_itinerary(
+            [_dest(_HANOI), _dest(_DANANG)],
+            direction=DirectionMode.BOTH,
+        )
+        result = expand_directions(it)
+        rev = next(r for r in result if r[0] is DirectionMode.REVERSE)
+        cities = [d.city.airports[0] for d in rev[1]]
+        assert cities == ["DAD", "HAN"]
