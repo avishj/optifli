@@ -391,21 +391,29 @@ class TestGenerateCandidates:
     def test_forward_explicit_legs(self, profiles_dir):
         it = load_profile(profiles_dir / "full.json")
         candidates = generate_candidates(it)
-        assert len(candidates) == 2
-        for rc in candidates:
-            assert rc.legs[0].departure_window.start is not None
-
-    def test_forward_full_explicit_chain_passes(self, profiles_dir):
-        it = load_profile(profiles_dir / "forward_full_explicit.json")
-
-        candidates = generate_candidates(it)
-
         assert len(candidates) == 1
+        assert candidates[0].direction is DirectionMode.FORWARD
         assert [leg.origin.airports[0] for leg in candidates[0].legs] == [
             "DEL",
             "HAN",
             "DAD",
         ]
+
+    def test_reverse_explicit_legs(self, profiles_dir):
+        it = load_profile(profiles_dir / "reverse_full_explicit.json")
+        candidates = generate_candidates(it)
+        assert len(candidates) == 1
+        assert candidates[0].direction is DirectionMode.REVERSE
+        assert [leg.origin.airports[0] for leg in candidates[0].legs] == [
+            "DEL",
+            "DAD",
+            "HAN",
+        ]
+
+    def test_both_explicit_legs_fail(self, profiles_dir):
+        it = load_profile(profiles_dir / "both_full_explicit.json")
+        with pytest.raises(ValueError, match="direction=both"):
+            generate_candidates(it)
 
     def test_partial_forward_explicit_chain_fails(self, profiles_dir):
         it = load_profile(profiles_dir / "forward_partial_explicit.json")

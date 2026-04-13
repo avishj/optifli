@@ -5,7 +5,7 @@
     { "city": { "name": "Da Nang", "include": ["DAD"] }, "stay": "1.5d" }
   ],
   "return_city": { "name": "Delhi", "include": ["DEL"] },
-  "direction": "forward",
+  "direction": "both",
   "route_mode": "fixed",
   "legs": [
     {
