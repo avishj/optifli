@@ -4,4 +4,16 @@
 
 """Route candidate generation and optimization engine."""
 
-__all__: list[str] = []
+from optifli.engine.candidates import (
+    RouteCandidate,
+    generate_candidates,
+    validate_leg_consistency,
+)
+from optifli.engine.direction import expand_directions
+
+__all__: list[str] = [
+    "RouteCandidate",
+    "expand_directions",
+    "generate_candidates",
+    "validate_leg_consistency",
+]
