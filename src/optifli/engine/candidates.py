@@ -4,6 +4,7 @@
 
 """Route candidate generation."""
 
+import logging
 from datetime import UTC, date, datetime, timedelta
 from itertools import pairwise
 from typing import Self
@@ -15,6 +16,8 @@ from optifli.models.airport import CityGroup
 from optifli.models.duration import Duration
 from optifli.models.itinerary import Destination, DirectionMode, Itinerary, Leg
 from optifli.models.window import DepartureWindow
+
+logger = logging.getLogger(__name__)
 
 _DEFAULT_TRAVEL_ESTIMATE = timedelta(hours=6)
 _DEFAULT_WINDOW_WIDTH = timedelta(hours=24)
@@ -228,6 +231,13 @@ def generate_candidates(
     for direction, destinations in expanded:
         if itinerary.legs:
             legs = list(itinerary.legs)
+            warnings = validate_leg_consistency(
+                legs,
+                destinations,
+                travel_estimate,
+            )
+            for warning in warnings:
+                logger.warning(warning)
         else:
             pairs = build_leg_sequence(
                 itinerary.origin,
@@ -260,5 +270,19 @@ def generate_candidates(
                 legs=legs,
             ),
         )
+        logger.debug(
+            "Candidate %s: %d leg(s), windows %s → %s",
+            direction.value,
+            len(legs),
+            legs[0].departure_window.start.isoformat(),
+            legs[-1].departure_window.end.isoformat(),
+        )
+
+    directions_used = ", ".join(c.direction.value for c in candidates)
+    logger.info(
+        "Generated %d candidate(s) for direction(s): %s",
+        len(candidates),
+        directions_used,
+    )
 
     return candidates
