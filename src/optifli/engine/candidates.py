@@ -8,6 +8,7 @@ import logging
 from datetime import UTC, date, datetime, timedelta
 from itertools import pairwise
 from typing import Self
+from zoneinfo import ZoneInfo
 
 from pydantic import BaseModel, ConfigDict, model_validator
 
@@ -16,6 +17,7 @@ from optifli.models.airport import CityGroup
 from optifli.models.duration import Duration
 from optifli.models.itinerary import Destination, DirectionMode, Itinerary, Leg
 from optifli.models.window import DepartureWindow
+from optifli.timezones import lookup_airport_timezone
 
 logger = logging.getLogger(__name__)
 
@@ -85,23 +87,27 @@ def build_leg_sequence(
 
 def compute_first_window(
     departure_date: date,
+    origin_timezone: ZoneInfo,
     window_width: timedelta = _DEFAULT_WINDOW_WIDTH,
 ) -> DepartureWindow:
     """Compute the departure window for the first leg from a calendar date.
 
     Args:
         departure_date: Trip start date.
+        origin_timezone: IANA timezone for the origin city group.
         window_width: Width of the departure window.
 
     Returns:
-        A TZ-aware ``DepartureWindow`` starting at midnight UTC.
+        A TZ-aware ``DepartureWindow`` starting at origin-local midnight,
+        converted to UTC.
     """
-    start = datetime(
+    start_local = datetime(
         departure_date.year,
         departure_date.month,
         departure_date.day,
-        tzinfo=UTC,
+        tzinfo=origin_timezone,
     )
+    start = start_local.astimezone(UTC)
     return DepartureWindow(start=start, end=start + window_width)
 
 
@@ -129,7 +135,7 @@ def propagate_window(
 
 
 def propagate_all_windows(
-    departure_date: date,
+    first_window: DepartureWindow,
     stays: list[Duration],
     leg_count: int,
     travel_estimate: timedelta = _DEFAULT_TRAVEL_ESTIMATE,
@@ -137,14 +143,14 @@ def propagate_all_windows(
 ) -> list[DepartureWindow]:
     """Propagate departure windows for all legs from a trip start date.
 
-    The first window is computed from *departure_date*; each subsequent window
+    The first window is provided directly; each subsequent window
     is derived from the previous one plus a stay duration and travel estimate.
 
     ``stays`` has one entry per destination (N destinations produce N+1 legs).
     The final leg (return) has no preceding stay.
 
     Args:
-        departure_date: Trip start date.
+        first_window: Departure window for the first leg.
         stays: Stay duration at each destination.
         leg_count: Total number of legs to generate windows for.
         travel_estimate: Estimated travel time per leg.
@@ -154,7 +160,7 @@ def propagate_all_windows(
         A list of exactly *leg_count* ``DepartureWindow`` objects.
     """
     windows: list[DepartureWindow] = [
-        compute_first_window(departure_date, window_width),
+        first_window,
     ]
     for i in range(1, leg_count):
         stay = stays[i - 1]
@@ -162,6 +168,27 @@ def propagate_all_windows(
             propagate_window(windows[-1], stay, travel_estimate, window_width),
         )
     return windows
+
+
+def _resolve_city_group_timezone(city_group: CityGroup) -> ZoneInfo:
+    """Resolve one unambiguous timezone for a city group.
+
+    Date-only propagation needs a single local midnight. If the city group's
+    airports span multiple timezones we fail fast instead of silently picking
+    one.
+    """
+    timezone_names = {
+        lookup_airport_timezone(airport_code) for airport_code in city_group.airports
+    }
+    if len(timezone_names) != 1:
+        joined_timezones = ", ".join(sorted(timezone_names))
+        msg = (
+            f"Cannot propagate 'departure_date' for origin city group "
+            f"'{city_group.name}' because its airports span multiple timezones "
+            f"({joined_timezones}). Provide explicit first-leg constraints instead."
+        )
+        raise ValueError(msg)
+    return ZoneInfo(next(iter(timezone_names)))
 
 
 def validate_leg_consistency(
@@ -239,6 +266,12 @@ def generate_candidates(
             for warning in warnings:
                 logger.warning(warning)
         else:
+            origin_timezone = _resolve_city_group_timezone(itinerary.origin)
+            first_window = compute_first_window(
+                itinerary.departure_date,  # type: ignore[arg-type]
+                origin_timezone,
+                window_width,
+            )
             pairs = build_leg_sequence(
                 itinerary.origin,
                 destinations,
@@ -246,7 +279,7 @@ def generate_candidates(
             )
             stays = [d.stay for d in destinations]
             windows = propagate_all_windows(
-                itinerary.departure_date,  # type: ignore[arg-type]
+                first_window,
                 stays,
                 leg_count=len(pairs),
                 travel_estimate=travel_estimate,
