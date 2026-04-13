@@ -403,6 +403,21 @@ class TestGenerateCandidates:
             assert leg.departure_window.end.tzinfo is not None
 
 
+class TestReorderRejected:
+    def test_reorder_raises_at_candidate_generation(self):
+        it = Itinerary.model_validate(
+            {
+                "origin": _DELHI,
+                "destinations": [_DEST_HANOI],
+                "return_city": _DELHI,
+                "route_mode": "reorder",
+                "departure_date": "2026-07-16",
+            }
+        )
+        with pytest.raises(ValueError, match="not yet supported"):
+            generate_candidates(it)
+
+
 class TestCandidateLogging:
     def test_info_log_candidate_count(self, profiles_dir, caplog):
         it = load_profile(profiles_dir / "minimal.json")

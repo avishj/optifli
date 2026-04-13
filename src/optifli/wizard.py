@@ -81,14 +81,11 @@ def _prompt_direction_mode() -> DirectionMode:
 
 
 def _prompt_route_mode() -> RouteMode:
-    """Prompt until a valid route mode is selected."""
-    choices = [mode.value for mode in RouteMode]
-    value = Prompt.ask(
-        "Route mode",
-        choices=choices,
-        default=RouteMode.FIXED.value,
-    )
-    return RouteMode(value)
+    """Prompt until a valid route mode is selected.
+
+    Only ``fixed`` is offered; ``reorder`` is not yet supported.
+    """
+    return RouteMode.FIXED
 
 
 def _prompt_destination(index: int) -> Destination:
@@ -196,15 +193,6 @@ def _collect() -> Itinerary:
         legs = _prompt_legs(origin, destinations, return_city)
     direction = _prompt_direction_mode()
     route_mode = _prompt_route_mode()
-
-    if route_mode is RouteMode.REORDER and legs:
-        if Confirm.ask(
-            "Reorder mode is incompatible with explicit legs. Drop legs?",
-            default=False,
-        ):
-            legs = []
-        else:
-            route_mode = RouteMode.FIXED
 
     departure_date = _prompt_departure_date() if not legs else None
 

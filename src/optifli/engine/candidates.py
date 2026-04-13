@@ -15,7 +15,13 @@ from pydantic import BaseModel, ConfigDict, model_validator
 from optifli.engine.direction import expand_directions
 from optifli.models.airport import CityGroup
 from optifli.models.duration import Duration
-from optifli.models.itinerary import Destination, DirectionMode, Itinerary, Leg
+from optifli.models.itinerary import (
+    Destination,
+    DirectionMode,
+    Itinerary,
+    Leg,
+    RouteMode,
+)
 from optifli.models.window import DepartureWindow
 from optifli.timezones import lookup_airport_timezone
 
@@ -243,6 +249,12 @@ def generate_candidates(
     Returns:
         A list of ``RouteCandidate`` objects (one per concrete direction).
     """
+    if itinerary.route_mode is RouteMode.REORDER:
+        msg = (
+            "'route_mode=reorder' is not yet supported. Use 'fixed' or omit route_mode."
+        )
+        raise ValueError(msg)
+
     expanded = expand_directions(itinerary)
     candidates: list[RouteCandidate] = []
 
