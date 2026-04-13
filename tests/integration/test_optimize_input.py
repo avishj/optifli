@@ -29,16 +29,10 @@ class TestOptimizeValidProfile:
         assert "Da Nang" in result.output
         assert "2d" in result.output
         assert "1.5d" in result.output
-        assert "both" in result.output
+        assert "forward" in result.output
         assert "fixed" in result.output
         assert "Legs" in result.output
-        assert "1" in result.output  # single leg from profile
-
-        # Direction "both" triggers the comparison table
-        assert "Direction Comparison" in result.output
-        comparison = result.output.split("Direction Comparison", maxsplit=1)[1]
-        assert "Forward" in comparison
-        assert "Reverse" in comparison
+        assert "3" in result.output
 
 
 class TestOptimizeInvalidProfile:
@@ -106,7 +100,6 @@ class TestOptimizeWizard:
                 "2d",
                 "del",
                 "forward",
-                "fixed",
                 "2026-07-16",
             ],
             confirm_answers=[False, False],
@@ -132,7 +125,6 @@ class TestOptimizeWizard:
                 "1.5d",
                 "del",
                 "forward",
-                "fixed",
                 "2026-07-16",
             ],
             confirm_answers=[True, False, False],
@@ -154,12 +146,11 @@ class TestOptimizeWizard:
                 "han",
                 "2d",
                 "del",
+                "forward",
                 "2026-07-16T19:00:00+05:30",
                 "2026-07-16T23:00:00+05:30",
                 "2026-07-18T09:00:00+05:30",
                 "2026-07-18T18:00:00+05:30",
-                "forward",
-                "fixed",
             ],
             confirm_answers=[False, True, False, False],
         )
@@ -180,7 +171,6 @@ class TestOptimizeWizard:
                 "1.5d",
                 "del",
                 "reverse",
-                "fixed",
                 "2026-07-16",
             ],
             confirm_answers=[True, False, False],
@@ -206,10 +196,9 @@ class TestOptimizeWizard:
                 "1.5d",
                 "del",
                 "both",
-                "fixed",
                 "2026-07-16",
             ],
-            confirm_answers=[True, False, False],
+            confirm_answers=[True, False],
         )
 
         result = invoke("optimize")
