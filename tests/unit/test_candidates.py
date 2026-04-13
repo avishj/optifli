@@ -297,7 +297,7 @@ class TestValidateLegConsistency:
         it = load_profile(profiles_dir / "minimal.json")
         assert validate_leg_consistency(legs, list(it.destinations)) == []
 
-    def test_tight_schedule_warning(self, profiles_dir):
+    def test_impossible_timing_warning(self, profiles_dir):
         legs = [
             _make_typed_leg(
                 "DEL",
@@ -315,27 +315,25 @@ class TestValidateLegConsistency:
         it = load_profile(profiles_dir / "minimal.json")
         warnings = validate_leg_consistency(legs, list(it.destinations))
         assert len(warnings) == 1
-        assert "shorter than stay + travel estimate" in warnings[0]
+        assert "earliest estimated feasible departure" in warnings[0]
 
-    def test_overlapping_legs_warning(self, profiles_dir):
+    def test_overlapping_windows_do_not_warn_when_still_feasible(self, profiles_dir):
         legs = [
             _make_typed_leg(
                 "DEL",
                 "HAN",
                 datetime(2026, 7, 16, 0, 0, tzinfo=UTC),
-                datetime(2026, 7, 16, 12, 0, tzinfo=UTC),
+                datetime(2026, 7, 18, 12, 0, tzinfo=UTC),
             ),
             _make_typed_leg(
                 "HAN",
                 "DEL",
-                datetime(2026, 7, 16, 6, 0, tzinfo=UTC),
-                datetime(2026, 7, 16, 18, 0, tzinfo=UTC),
+                datetime(2026, 7, 18, 0, 0, tzinfo=UTC),
+                datetime(2026, 7, 19, 18, 0, tzinfo=UTC),
             ),
         ]
         it = load_profile(profiles_dir / "minimal.json")
-        warnings = validate_leg_consistency(legs, list(it.destinations))
-        assert len(warnings) == 1
-        assert "overlapping" in warnings[0]
+        assert validate_leg_consistency(legs, list(it.destinations)) == []
 
     def test_single_leg_no_warnings(self, profiles_dir):
         legs = [
@@ -488,4 +486,6 @@ class TestCandidateLogging:
         )
         with caplog.at_level(logging.WARNING, logger="optifli.engine.candidates"):
             generate_candidates(it)
-        assert any("shorter than stay + travel estimate" in m for m in caplog.messages)
+        assert any(
+            "earliest estimated feasible departure" in m for m in caplog.messages
+        )
