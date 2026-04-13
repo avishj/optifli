@@ -150,13 +150,32 @@ def _prompt_arrival_cutoff(
             )
 
 
+def _ordered_stops(
+    origin: CityGroup,
+    destinations: list[Destination],
+    return_city: CityGroup,
+    direction: DirectionMode,
+) -> list[CityGroup]:
+    ordered_destinations = (
+        list(destinations)
+        if direction is DirectionMode.FORWARD
+        else list(reversed(destinations))
+    )
+    return [
+        origin,
+        *(destination.city for destination in ordered_destinations),
+        return_city,
+    ]
+
+
 def _prompt_legs(
     origin: CityGroup,
     destinations: list[Destination],
     return_city: CityGroup,
+    direction: DirectionMode,
 ) -> list[Leg]:
-    """Prompt for explicit departure windows for each forward leg."""
-    stops = [origin, *(destination.city for destination in destinations), return_city]
+    """Prompt for explicit departure windows in the chosen concrete route order."""
+    stops = _ordered_stops(origin, destinations, return_city, direction)
     legs: list[Leg] = []
 
     for index, (leg_origin, leg_destination) in enumerate(pairwise(stops), start=1):
@@ -188,10 +207,13 @@ def _collect() -> Itinerary:
         destinations.append(_prompt_destination(len(destinations) + 1))
 
     return_city = _prompt_city("Return airport code")
-    legs = []
-    if Confirm.ask("Add departure windows?", default=False):
-        legs = _prompt_legs(origin, destinations, return_city)
     direction = _prompt_direction_mode()
+    legs = []
+    if direction is not DirectionMode.BOTH and Confirm.ask(
+        "Add departure windows?",
+        default=False,
+    ):
+        legs = _prompt_legs(origin, destinations, return_city, direction)
     route_mode = _prompt_route_mode()
 
     departure_date = _prompt_departure_date() if not legs else None
