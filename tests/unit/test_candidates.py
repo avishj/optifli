@@ -29,6 +29,7 @@ pytestmark = pytest.mark.unit
 _DELHI = {"name": "Delhi", "airports": ["DEL"]}
 _HANOI = {"name": "Hanoi", "airports": ["HAN"]}
 _DEST_HANOI = {"city": _HANOI, "stay": "2d"}
+_KOLKATA = ZoneInfo("Asia/Kolkata")
 
 
 def _make_leg():
@@ -106,17 +107,21 @@ class TestBuildLegSequence:
 
 class TestComputeFirstWindow:
     def test_default_24h_window(self):
-        w = compute_first_window(date(2026, 7, 16))
-        assert w.start == datetime(2026, 7, 16, 0, 0, tzinfo=UTC)
-        assert w.end == datetime(2026, 7, 17, 0, 0, tzinfo=UTC)
+        w = compute_first_window(date(2026, 7, 16), _KOLKATA)
+        assert w.start == datetime(2026, 7, 15, 18, 30, tzinfo=UTC)
+        assert w.end == datetime(2026, 7, 16, 18, 30, tzinfo=UTC)
 
     def test_custom_width(self):
-        w = compute_first_window(date(2026, 7, 16), window_width=timedelta(hours=12))
-        assert w.start == datetime(2026, 7, 16, 0, 0, tzinfo=UTC)
-        assert w.end == datetime(2026, 7, 16, 12, 0, tzinfo=UTC)
+        w = compute_first_window(
+            date(2026, 7, 16),
+            _KOLKATA,
+            window_width=timedelta(hours=12),
+        )
+        assert w.start == datetime(2026, 7, 15, 18, 30, tzinfo=UTC)
+        assert w.end == datetime(2026, 7, 16, 6, 30, tzinfo=UTC)
 
     def test_returns_valid_departure_window(self):
-        w = compute_first_window(date(2026, 7, 16))
+        w = compute_first_window(date(2026, 7, 16), _KOLKATA)
         assert w.start.tzinfo is not None
         assert w.end.tzinfo is not None
         assert w.start < w.end
@@ -124,14 +129,13 @@ class TestComputeFirstWindow:
 
 class TestPropagateWindow:
     def _first(self):
-        return compute_first_window(date(2026, 7, 16))
+        return compute_first_window(date(2026, 7, 16), _KOLKATA)
 
     def test_basic_2d_stay(self):
         first = self._first()
         stay = Duration.model_validate("2d")
         w = propagate_window(first, stay)
-        # 0h (start) + 6h travel + 48h stay = 54h offset
-        expected_start = datetime(2026, 7, 16, 0, 0, tzinfo=UTC) + timedelta(hours=54)
+        expected_start = first.start + timedelta(hours=54)
         assert w.start == expected_start
         assert w.end == expected_start + timedelta(hours=24)
 
@@ -139,16 +143,14 @@ class TestPropagateWindow:
         first = self._first()
         stay = Duration.model_validate("0.5d")
         w = propagate_window(first, stay)
-        # 6h travel + 12h stay = 18h offset
-        expected_start = datetime(2026, 7, 16, 0, 0, tzinfo=UTC) + timedelta(hours=18)
+        expected_start = first.start + timedelta(hours=18)
         assert w.start == expected_start
 
     def test_custom_travel_estimate(self):
         first = self._first()
         stay = Duration.model_validate("2d")
         w = propagate_window(first, stay, travel_estimate=timedelta(hours=12))
-        # 12h travel + 48h stay = 60h offset
-        expected_start = datetime(2026, 7, 16, 0, 0, tzinfo=UTC) + timedelta(hours=60)
+        expected_start = first.start + timedelta(hours=60)
         assert w.start == expected_start
 
     def test_custom_window_width(self):
@@ -161,11 +163,15 @@ class TestPropagateWindow:
 class TestPropagateAllWindows:
     def test_single_destination_two_legs(self):
         stays = [Duration.model_validate("2d")]
-        windows = propagate_all_windows(date(2026, 7, 16), stays, leg_count=2)
+        first = compute_first_window(date(2026, 7, 16), _KOLKATA)
+        windows = propagate_all_windows(
+            first,
+            stays,
+            leg_count=2,
+        )
         assert len(windows) == 2
-        assert windows[0].start == datetime(2026, 7, 16, 0, 0, tzinfo=UTC)
-        # leg 2: 0h + 6h travel + 48h stay = 54h
-        expected = datetime(2026, 7, 16, 0, 0, tzinfo=UTC) + timedelta(hours=54)
+        assert windows[0].start == datetime(2026, 7, 15, 18, 30, tzinfo=UTC)
+        expected = windows[0].start + timedelta(hours=54)
         assert windows[1].start == expected
 
     def test_three_destinations_four_legs(self):
@@ -174,26 +180,41 @@ class TestPropagateAllWindows:
             Duration.model_validate("1.5d"),
             Duration.model_validate("3d"),
         ]
-        windows = propagate_all_windows(date(2026, 7, 16), stays, leg_count=4)
+        first = compute_first_window(date(2026, 7, 16), _KOLKATA)
+        windows = propagate_all_windows(
+            first,
+            stays,
+            leg_count=4,
+        )
         assert len(windows) == 4
         for w in windows:
             assert w.start < w.end
 
     def test_fractional_durations(self):
         stays = [Duration.model_validate("0.5d"), Duration.model_validate("12h")]
-        windows = propagate_all_windows(date(2026, 7, 16), stays, leg_count=3)
-        assert len(windows) == 3
-        # leg 2: 6h travel + 12h stay = 18h offset
-        assert windows[1].start == datetime(2026, 7, 16, 18, 0, tzinfo=UTC)
-        # leg 3: 18h + 6h travel + 12h stay = 36h offset
-        assert windows[2].start == datetime(2026, 7, 16, 0, 0, tzinfo=UTC) + timedelta(
-            hours=36
+        first = compute_first_window(date(2026, 7, 16), _KOLKATA)
+        windows = propagate_all_windows(
+            first,
+            stays,
+            leg_count=3,
         )
+        assert len(windows) == 3
+        assert windows[1].start == windows[0].start + timedelta(hours=18)
+        assert windows[2].start == windows[0].start + timedelta(hours=36)
 
     def test_determinism(self):
         stays = [Duration.model_validate("2d"), Duration.model_validate("1d")]
-        a = propagate_all_windows(date(2026, 7, 16), stays, leg_count=3)
-        b = propagate_all_windows(date(2026, 7, 16), stays, leg_count=3)
+        first = compute_first_window(date(2026, 7, 16), _KOLKATA)
+        a = propagate_all_windows(
+            first,
+            stays,
+            leg_count=3,
+        )
+        b = propagate_all_windows(
+            first,
+            stays,
+            leg_count=3,
+        )
         assert a == b
 
 
@@ -202,7 +223,12 @@ class TestCrossTimezoneCorrectness:
 
     def test_round_trip_asia_kolkata(self):
         stays = [Duration.model_validate("2d")]
-        windows = propagate_all_windows(date(2026, 7, 16), stays, leg_count=2)
+        first = compute_first_window(date(2026, 7, 16), _KOLKATA)
+        windows = propagate_all_windows(
+            first,
+            stays,
+            leg_count=2,
+        )
         kolkata = ZoneInfo("Asia/Kolkata")
         for w in windows:
             local_start = w.start.astimezone(kolkata)
@@ -212,7 +238,12 @@ class TestCrossTimezoneCorrectness:
     def test_dst_transition_no_drift(self):
         # 2026-03-08 is US spring-forward day (EST→EDT at 02:00)
         stays = [Duration.model_validate("1d")]
-        windows = propagate_all_windows(date(2026, 3, 8), stays, leg_count=2)
+        first = compute_first_window(date(2026, 3, 8), ZoneInfo("US/Eastern"))
+        windows = propagate_all_windows(
+            first,
+            stays,
+            leg_count=2,
+        )
         eastern = ZoneInfo("US/Eastern")
         for w in windows:
             local_start = w.start.astimezone(eastern)
@@ -221,7 +252,12 @@ class TestCrossTimezoneCorrectness:
 
     def test_all_windows_tz_aware(self):
         stays = [Duration.model_validate("2d"), Duration.model_validate("1d")]
-        windows = propagate_all_windows(date(2026, 7, 16), stays, leg_count=3)
+        first = compute_first_window(date(2026, 7, 16), _KOLKATA)
+        windows = propagate_all_windows(
+            first,
+            stays,
+            leg_count=3,
+        )
         for w in windows:
             assert w.start.tzinfo is not None
             assert w.end.tzinfo is not None
@@ -322,6 +358,14 @@ class TestGenerateCandidates:
         rc = candidates[0]
         assert rc.direction is DirectionMode.FORWARD
         assert len(rc.legs) == 2
+        assert rc.legs[0].departure_window.start == datetime(
+            2026,
+            7,
+            15,
+            18,
+            30,
+            tzinfo=UTC,
+        )
         assert rc.legs[0].origin.airports == ["DEL"]
         assert rc.legs[0].destination.airports == ["HAN"]
         assert rc.legs[1].origin.airports == ["HAN"]
@@ -350,6 +394,11 @@ class TestGenerateCandidates:
         assert len(candidates) == 2
         for rc in candidates:
             assert rc.legs[0].departure_window.start is not None
+
+    def test_departure_date_rejects_multi_timezone_origin(self, profiles_dir):
+        itinerary = load_profile(profiles_dir / "multi_timezone_origin.json")
+        with pytest.raises(ValueError, match="span multiple timezones"):
+            generate_candidates(itinerary)
 
     def test_propagated_windows_are_tz_aware(self, profiles_dir):
         it = load_profile(profiles_dir / "minimal.json")
