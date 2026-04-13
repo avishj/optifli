@@ -395,6 +395,30 @@ class TestGenerateCandidates:
         for rc in candidates:
             assert rc.legs[0].departure_window.start is not None
 
+    def test_forward_full_explicit_chain_passes(self, profiles_dir):
+        it = load_profile(profiles_dir / "forward_full_explicit.json")
+
+        candidates = generate_candidates(it)
+
+        assert len(candidates) == 1
+        assert [leg.origin.airports[0] for leg in candidates[0].legs] == [
+            "DEL",
+            "HAN",
+            "DAD",
+        ]
+
+    def test_partial_forward_explicit_chain_fails(self, profiles_dir):
+        it = load_profile(profiles_dir / "forward_partial_explicit.json")
+
+        with pytest.raises(ValueError, match="full concrete route"):
+            generate_candidates(it)
+
+    def test_wrong_forward_explicit_city_order_fails(self, profiles_dir):
+        it = load_profile(profiles_dir / "forward_wrong_order_explicit.json")
+
+        with pytest.raises(ValueError, match="concrete route segment"):
+            generate_candidates(it)
+
     def test_propagated_windows_are_tz_aware(self, profiles_dir):
         it = load_profile(profiles_dir / "minimal.json")
         candidates = generate_candidates(it)
