@@ -198,9 +198,9 @@ def validate_leg_consistency(
     Returns a list of warning strings (not errors — user windows take
     precedence).  An empty list means no warnings.
 
-    Warnings are emitted when the gap between one leg's end and the next
-    leg's start is shorter than the expected stay + travel time, or when
-    legs overlap.
+    Warnings are emitted only when the next departure window is impossible
+    even under the most optimistic interpretation of the prior leg window:
+    previous departure at window start, then estimated travel time and stay.
 
     Args:
         legs: User-provided legs with explicit departure windows.
@@ -212,19 +212,15 @@ def validate_leg_consistency(
     """
     warnings: list[str] = []
     for i in range(len(legs) - 1):
-        gap = legs[i + 1].departure_window.start - legs[i].departure_window.end
         if i < len(destinations):
             required = travel_estimate + destinations[i].stay.timedelta
         else:
             required = travel_estimate
-        if gap < timedelta(0):
+        earliest_next_departure = legs[i].departure_window.start + required
+        if legs[i + 1].departure_window.end < earliest_next_departure:
             warnings.append(
-                f"Leg {i + 1} and leg {i + 2} have overlapping departure windows",
-            )
-        elif gap < required:
-            warnings.append(
-                f"Gap between leg {i + 1} and leg {i + 2} "
-                f"({gap}) is shorter than stay + travel estimate ({required})",
+                f"Leg {i + 2} departure window ends before the earliest "
+                f"estimated feasible departure ({earliest_next_departure})",
             )
     return warnings
 
