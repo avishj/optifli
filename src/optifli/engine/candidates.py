@@ -229,6 +229,43 @@ def validate_leg_consistency(
     return warnings
 
 
+def _format_city_group(city_group: CityGroup) -> str:
+    return "/".join(city_group.airports)
+
+
+def _same_city_group(left: CityGroup, right: CityGroup) -> bool:
+    return left.airports == right.airports
+
+
+def validate_explicit_leg_route_shape(
+    legs: list[Leg],
+    expected_pairs: list[tuple[CityGroup, CityGroup]],
+) -> None:
+    """Require explicit legs to cover the whole concrete route in order."""
+    if len(legs) != len(expected_pairs):
+        msg = (
+            "Explicit legs must cover the full concrete route: "
+            f"expected {len(expected_pairs)} leg(s), got {len(legs)}"
+        )
+        raise ValueError(msg)
+
+    for index, (leg, (expected_origin, expected_destination)) in enumerate(
+        zip(legs, expected_pairs, strict=True),
+        start=1,
+    ):
+        if not _same_city_group(leg.origin, expected_origin) or not _same_city_group(
+            leg.destination, expected_destination
+        ):
+            msg = (
+                f"Explicit leg {index} must match the concrete route segment "
+                f"{_format_city_group(expected_origin)} -> "
+                f"{_format_city_group(expected_destination)}; got "
+                f"{_format_city_group(leg.origin)} -> "
+                f"{_format_city_group(leg.destination)}"
+            )
+            raise ValueError(msg)
+
+
 def generate_candidates(
     itinerary: Itinerary,
     travel_estimate: timedelta = _DEFAULT_TRAVEL_ESTIMATE,
@@ -259,7 +296,14 @@ def generate_candidates(
     candidates: list[RouteCandidate] = []
 
     for direction, destinations in expanded:
+        pairs = build_leg_sequence(
+            itinerary.origin,
+            destinations,
+            itinerary.return_city,
+        )
         if itinerary.legs:
+            if itinerary.direction is DirectionMode.FORWARD:
+                validate_explicit_leg_route_shape(itinerary.legs, pairs)
             legs = list(itinerary.legs)
             warnings = validate_leg_consistency(
                 legs,
@@ -274,11 +318,6 @@ def generate_candidates(
                 itinerary.departure_date,  # type: ignore[arg-type]
                 origin_timezone,
                 window_width,
-            )
-            pairs = build_leg_sequence(
-                itinerary.origin,
-                destinations,
-                itinerary.return_city,
             )
             stays = [d.stay for d in destinations]
             windows = propagate_all_windows(
