@@ -4,6 +4,7 @@
 
 """Unit tests for route candidate generation."""
 
+import logging
 from datetime import UTC, date, datetime, timedelta
 from zoneinfo import ZoneInfo
 
@@ -20,7 +21,7 @@ from optifli.engine.candidates import (
     validate_leg_consistency,
 )
 from optifli.models.duration import Duration
-from optifli.models.itinerary import DirectionMode, Leg
+from optifli.models.itinerary import DirectionMode, Itinerary, Leg
 from optifli.profile import load_profile
 
 pytestmark = pytest.mark.unit
@@ -356,3 +357,44 @@ class TestGenerateCandidates:
         for leg in candidates[0].legs:
             assert leg.departure_window.start.tzinfo is not None
             assert leg.departure_window.end.tzinfo is not None
+
+
+class TestCandidateLogging:
+    def test_info_log_candidate_count(self, profiles_dir, caplog):
+        it = load_profile(profiles_dir / "minimal.json")
+        with caplog.at_level(logging.INFO, logger="optifli.engine.candidates"):
+            generate_candidates(it)
+        assert any("Generated 1 candidate(s)" in m for m in caplog.messages)
+
+    def test_debug_log_leg_details(self, profiles_dir, caplog):
+        it = load_profile(profiles_dir / "minimal.json")
+        with caplog.at_level(logging.DEBUG, logger="optifli.engine.candidates"):
+            generate_candidates(it)
+        assert any("2 leg(s)" in m for m in caplog.messages)
+
+    def test_warning_log_tight_legs(self, caplog):
+        legs = [
+            _make_typed_leg(
+                "DEL",
+                "HAN",
+                datetime(2026, 7, 16, 0, 0, tzinfo=UTC),
+                datetime(2026, 7, 16, 6, 0, tzinfo=UTC),
+            ),
+            _make_typed_leg(
+                "HAN",
+                "DEL",
+                datetime(2026, 7, 17, 0, 0, tzinfo=UTC),
+                datetime(2026, 7, 17, 6, 0, tzinfo=UTC),
+            ),
+        ]
+        it = Itinerary.model_validate(
+            {
+                "origin": _DELHI,
+                "destinations": [_DEST_HANOI],
+                "return_city": _DELHI,
+                "legs": legs,
+            }
+        )
+        with caplog.at_level(logging.WARNING, logger="optifli.engine.candidates"):
+            generate_candidates(it)
+        assert any("shorter than stay + travel estimate" in m for m in caplog.messages)
