@@ -62,3 +62,49 @@ class TestBenchmarkItinerary:
             assert ca.direction == cb.direction
             for la, lb in zip(ca.legs, cb.legs, strict=True):
                 assert la.departure_window == lb.departure_window
+
+
+class TestExplicitLegContracts:
+    def test_forward_explicit_profile_passes(self, profiles_dir):
+        it = load_profile(profiles_dir / "full.json")
+
+        candidates = generate_candidates(it)
+
+        assert len(candidates) == 1
+        assert candidates[0].direction is DirectionMode.FORWARD
+        assert [leg.origin.airports[0] for leg in candidates[0].legs] == [
+            "DEL",
+            "HAN",
+            "DAD",
+        ]
+
+    def test_reverse_explicit_profile_passes(self, profiles_dir):
+        it = load_profile(profiles_dir / "reverse_full_explicit.json")
+
+        candidates = generate_candidates(it)
+
+        assert len(candidates) == 1
+        assert candidates[0].direction is DirectionMode.REVERSE
+        assert [leg.origin.airports[0] for leg in candidates[0].legs] == [
+            "DEL",
+            "DAD",
+            "HAN",
+        ]
+
+    def test_both_direction_with_explicit_legs_fails_clearly(self, profiles_dir):
+        it = load_profile(profiles_dir / "both_full_explicit.json")
+
+        with pytest.raises(ValueError, match="direction=both"):
+            generate_candidates(it)
+
+    def test_partial_explicit_chain_fails_clearly(self, profiles_dir):
+        it = load_profile(profiles_dir / "forward_partial_explicit.json")
+
+        with pytest.raises(ValueError, match="full concrete route"):
+            generate_candidates(it)
+
+    def test_wrong_explicit_city_order_fails_clearly(self, profiles_dir):
+        it = load_profile(profiles_dir / "forward_wrong_order_explicit.json")
+
+        with pytest.raises(ValueError, match="concrete route segment"):
+            generate_candidates(it)
