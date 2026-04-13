@@ -291,6 +291,9 @@ def generate_candidates(
             "'route_mode=reorder' is not yet supported. Use 'fixed' or omit route_mode."
         )
         raise ValueError(msg)
+    if itinerary.legs and itinerary.direction is DirectionMode.BOTH:
+        msg = "'direction=both' is not supported when explicit legs are provided"
+        raise ValueError(msg)
 
     expanded = expand_directions(itinerary)
     candidates: list[RouteCandidate] = []
@@ -302,8 +305,7 @@ def generate_candidates(
             itinerary.return_city,
         )
         if itinerary.legs:
-            if itinerary.direction is DirectionMode.FORWARD:
-                validate_explicit_leg_route_shape(itinerary.legs, pairs)
+            validate_explicit_leg_route_shape(itinerary.legs, pairs)
             legs = list(itinerary.legs)
             warnings = validate_leg_consistency(
                 legs,
