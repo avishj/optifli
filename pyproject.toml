@@ -31,6 +31,7 @@ dependencies = [
     "rich>=14.3.3",
     "pydantic-settings>=2.13.1",
     "flights>=0.8.4",
+    "airportsdata>=20260315",
 ]
 
 [project.urls]
