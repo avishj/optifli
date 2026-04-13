@@ -161,6 +161,10 @@ class TestLoadProfileValidationErrors:
         with pytest.raises(ProfileError, match="validation failed"):
             load_profile(p)
 
+    def test_multi_timezone_origin_with_date(self, profiles_dir):
+        with pytest.raises(ProfileError, match="validation failed"):
+            load_profile(profiles_dir / "multi_timezone_origin.json")
+
     def test_naive_datetime_in_leg(self, tmp_path):
         data = {
             "origin": {"name": "Delhi", "include": ["DEL"]},

@@ -410,6 +410,48 @@ class TestDepartureDateRequired:
         assert it.departure_date == date(2026, 7, 16)
 
 
+_NYC = {"name": "Bi-Coastal", "airports": ["JFK", "LAX"]}
+_LONDON = {"name": "London", "airports": ["LHR", "LGW"]}
+
+
+class TestOriginTimezoneValidation:
+    def test_single_timezone_origin_valid(self):
+        it = Itinerary(
+            origin=_DELHI,
+            destinations=[_dest(_HANOI)],
+            return_city=_DELHI,
+            departure_date=date(2026, 7, 16),
+        )
+        assert it.departure_date == date(2026, 7, 16)
+
+    def test_multi_timezone_origin_with_date_rejected(self):
+        with pytest.raises(ValidationError, match="span multiple timezones"):
+            Itinerary(
+                origin=_NYC,
+                destinations=[_dest(_HANOI)],
+                return_city=_NYC,
+                departure_date=date(2026, 7, 16),
+            )
+
+    def test_multi_timezone_origin_with_legs_valid(self):
+        it = Itinerary(
+            origin=_NYC,
+            destinations=[_dest(_HANOI)],
+            return_city=_NYC,
+            legs=[_make_leg()],
+        )
+        assert it.departure_date is None
+
+    def test_same_timezone_multi_airport_valid(self):
+        it = Itinerary(
+            origin=_LONDON,
+            destinations=[_dest(_HANOI)],
+            return_city=_LONDON,
+            departure_date=date(2026, 7, 16),
+        )
+        assert it.departure_date == date(2026, 7, 16)
+
+
 class TestReorderLegsExclusive:
     def test_reorder_empty_legs_valid(self):
         it = Itinerary(

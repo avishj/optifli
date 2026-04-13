@@ -395,11 +395,6 @@ class TestGenerateCandidates:
         for rc in candidates:
             assert rc.legs[0].departure_window.start is not None
 
-    def test_departure_date_rejects_multi_timezone_origin(self, profiles_dir):
-        itinerary = load_profile(profiles_dir / "multi_timezone_origin.json")
-        with pytest.raises(ValueError, match="span multiple timezones"):
-            generate_candidates(itinerary)
-
     def test_propagated_windows_are_tz_aware(self, profiles_dir):
         it = load_profile(profiles_dir / "minimal.json")
         candidates = generate_candidates(it)

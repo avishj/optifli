@@ -13,6 +13,7 @@ from pydantic import BaseModel, BeforeValidator, ConfigDict, model_validator
 from optifli.models.airport import CityGroup
 from optifli.models.duration import Duration
 from optifli.models.window import ArrivalCutoff, DepartureWindow
+from optifli.timezones import lookup_airport_timezone
 
 
 class DirectionMode(StrEnum):
@@ -133,5 +134,22 @@ class Itinerary(BaseModel, frozen=True):
     def _validate_reorder_no_legs(self) -> Self:
         if self.route_mode is RouteMode.REORDER and self.legs:
             msg = "'route_mode' cannot be 'reorder' when explicit legs are provided"
+            raise ValueError(msg)
+        return self
+
+    @model_validator(mode="after")
+    def _validate_origin_single_timezone(self) -> Self:
+        if self.departure_date is None:
+            return self
+        timezone_names = {
+            lookup_airport_timezone(code) for code in self.origin.airports
+        }
+        if len(timezone_names) != 1:
+            joined = ", ".join(sorted(timezone_names))
+            msg = (
+                f"Cannot use 'departure_date' with origin city group "
+                f"'{self.origin.name}' because its airports span multiple "
+                f"timezones ({joined}). Provide explicit legs instead."
+            )
             raise ValueError(msg)
         return self

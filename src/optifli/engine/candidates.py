@@ -171,23 +171,14 @@ def propagate_all_windows(
 
 
 def _resolve_city_group_timezone(city_group: CityGroup) -> ZoneInfo:
-    """Resolve one unambiguous timezone for a city group.
+    """Resolve the single timezone for a city group.
 
-    Date-only propagation needs a single local midnight. If the city group's
-    airports span multiple timezones we fail fast instead of silently picking
-    one.
+    The ``Itinerary`` model guarantees that date-only propagation is only
+    used when the origin city group has one unambiguous timezone.
     """
     timezone_names = {
         lookup_airport_timezone(airport_code) for airport_code in city_group.airports
     }
-    if len(timezone_names) != 1:
-        joined_timezones = ", ".join(sorted(timezone_names))
-        msg = (
-            f"Cannot propagate 'departure_date' for origin city group "
-            f"'{city_group.name}' because its airports span multiple timezones "
-            f"({joined_timezones}). Provide explicit first-leg constraints instead."
-        )
-        raise ValueError(msg)
     return ZoneInfo(next(iter(timezone_names)))
 
 
