@@ -11,9 +11,10 @@ import pytest
 pytestmark = pytest.mark.e2e
 
 
-def _run(*args: str) -> subprocess.CompletedProcess[str]:
+def _run(*args: str, input_data: str | None = None) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
         ["optifli", *args],
+        input=input_data,
         capture_output=True,
         text=True,
         check=False,
