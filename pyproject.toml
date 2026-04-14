@@ -48,7 +48,7 @@ python-preference = "managed"
 
 [dependency-groups]
 dev = [
-    "pytest>=9.0.2",
+    "pytest>=9.0.3",
     "pytest-cov>=7.1.0",
     "pytest-randomly>=4.0.1",
     "pytest-timeout>=2.4.0",
