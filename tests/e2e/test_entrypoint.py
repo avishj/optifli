@@ -98,3 +98,46 @@ def test_invalid_env_config():
 def test_invalid_command():
     result = _run("nonexistent")
     assert result.returncode != 0
+
+
+def test_wizard_happy_path_forward():
+    inputs = (
+        "DEL\n"  # Origin
+        "HAN\n"  # Destination 1
+        "3d\n"  # Stay at Destination 1
+        "n\n"  # Add another destination? (No)
+        "SGN\n"  # Return city
+        "forward\n"  # Direction mode
+        "n\n"  # Add departure windows? (No)
+        "2026-07-16\n"  # Departure date
+    )
+
+    result = _run("optimize", input_data=inputs)
+    assert result.returncode == 0
+    assert "Itinerary Summary" in result.stdout
+    assert "DEL (DEL)" in result.stdout
+    assert "HAN (HAN)" in result.stdout
+    assert "SGN (SGN)" in result.stdout
+    assert "forward" in result.stdout
+
+
+def test_wizard_happy_path_both():
+    inputs = (
+        "JFK\n"  # Origin
+        "LHR\n"  # Destination 1
+        "2d\n"  # Stay at Destination 1
+        "y\n"  # Add another destination? (Yes)
+        "CDG\n"  # Destination 2
+        "3d\n"  # Stay at Destination 2
+        "n\n"  # Add another destination? (No)
+        "FRA\n"  # Return city
+        "both\n"  # Direction mode
+        "2026-08-01\n"  # Departure date
+    )
+
+    result = _run("optimize", input_data=inputs)
+    assert result.returncode == 0
+    assert "Itinerary Summary" in result.stdout
+    assert "Direction Comparison" in result.stdout
+    assert "JFK (JFK)" in result.stdout
+    assert "both" in result.stdout
