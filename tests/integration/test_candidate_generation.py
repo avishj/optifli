@@ -39,7 +39,7 @@ class TestBenchmarkItinerary:
         for rc in candidates:
             for leg in rc.legs:
                 assert leg.departure_window.start.tzinfo is not None
-                assert leg.departure_window.end.tzinfo is not None
+                assert leg.departure_window.end.tzinfo == UTC
                 assert leg.departure_window.start.tzinfo == UTC
 
     def test_elapsed_time_math(self, candidates):
