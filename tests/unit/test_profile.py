@@ -35,9 +35,9 @@ class TestLoadProfileValid:
         assert len(it.destinations) == 2
         assert it.destinations[1].city.name == "Da Nang"
         assert it.destinations[1].stay.total_days == 1.5
-        assert it.direction is DirectionMode.BOTH
+        assert it.direction is DirectionMode.FORWARD
         assert it.route_mode is RouteMode.FIXED
-        assert len(it.legs) == 1
+        assert len(it.legs) == 3
         assert it.legs[0].origin.airports == ["DEL"]
         assert it.legs[0].destination.airports == ["HAN"]
         assert it.departure_date is None

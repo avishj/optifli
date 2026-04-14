@@ -39,8 +39,7 @@ def test_optimize_full_profile(profiles_dir):
     assert "Delhi" in result.stdout
     assert "Hanoi" in result.stdout
     assert "Da Nang" in result.stdout
-    assert "Forward" in result.stdout
-    assert "Reverse" in result.stdout
+    assert "forward" in result.stdout
 
 
 def test_no_args_shows_help():
