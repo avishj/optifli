@@ -349,11 +349,11 @@ class TestItineraryInvalid:
             )
 
 
-def _make_leg():
+def _make_leg(origin=_DELHI, destination=_HANOI):
     """Create a minimal valid Leg for testing."""
     return {
-        "origin": _DELHI,
-        "destination": _HANOI,
+        "origin": origin,
+        "destination": destination,
         "departure_window": {
             "start": datetime(2026, 7, 16, 19, 0, tzinfo=UTC),
             "end": datetime(2026, 7, 17, 11, 0, tzinfo=UTC),
@@ -438,7 +438,7 @@ class TestOriginTimezoneValidation:
             origin=_NYC,
             destinations=[_dest(_HANOI)],
             return_city=_NYC,
-            legs=[_make_leg()],
+            legs=[_make_leg(origin=_NYC)],
         )
         assert it.departure_date is None
 
