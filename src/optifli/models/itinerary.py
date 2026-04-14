@@ -139,7 +139,7 @@ class Itinerary(BaseModel, frozen=True):
 
     @model_validator(mode="after")
     def _validate_origin_single_timezone(self) -> Self:
-        if self.departure_date is None:
+        if self.departure_date is None or self.legs:
             return self
         timezone_names = {
             lookup_airport_timezone(code) for code in self.origin.airports
