@@ -230,7 +230,7 @@ def _format_city_group(city_group: CityGroup) -> str:
 
 
 def _same_city_group(left: CityGroup, right: CityGroup) -> bool:
-    return left.airports == right.airports
+    return set(left.airports) == set(right.airports)
 
 
 def validate_explicit_leg_route_shape(
