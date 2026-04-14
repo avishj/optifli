@@ -10,7 +10,7 @@ import pytest
 
 from optifli.engine import generate_candidates
 from optifli.models.itinerary import DirectionMode
-from optifli.profile import load_profile
+from optifli.profile import ProfileError, load_profile
 
 pytestmark = pytest.mark.integration
 
@@ -92,10 +92,8 @@ class TestExplicitLegContracts:
         ]
 
     def test_both_direction_with_explicit_legs_fails_clearly(self, profiles_dir):
-        it = load_profile(profiles_dir / "both_full_explicit.json")
-
-        with pytest.raises(ValueError, match="direction=both"):
-            generate_candidates(it)
+        with pytest.raises(ProfileError, match="direction=both"):
+            load_profile(profiles_dir / "both_full_explicit.json")
 
     def test_partial_explicit_chain_fails_clearly(self, profiles_dir):
         it = load_profile(profiles_dir / "forward_partial_explicit.json")

@@ -131,10 +131,16 @@ class Itinerary(BaseModel, frozen=True):
         return self
 
     @model_validator(mode="after")
-    def _validate_reorder_no_legs(self) -> Self:
-        if self.route_mode is RouteMode.REORDER and self.legs:
-            msg = "'route_mode' cannot be 'reorder' when explicit legs are provided"
-            raise ValueError(msg)
+    def _validate_legs_constraints(self) -> Self:
+        if self.legs:
+            if self.route_mode is RouteMode.REORDER:
+                msg = "'route_mode' cannot be 'reorder' when explicit legs are provided"
+                raise ValueError(msg)
+            if self.direction is DirectionMode.BOTH:
+                msg = (
+                    "'direction=both' is not supported when explicit legs are provided"
+                )
+                raise ValueError(msg)
         return self
 
     @model_validator(mode="after")
