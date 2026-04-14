@@ -141,3 +141,43 @@ def test_wizard_happy_path_both():
     assert "Direction Comparison" in result.stdout
     assert "JFK (JFK)" in result.stdout
     assert "both" in result.stdout
+
+
+def test_wizard_validation_retry():
+    # Provide bad inputs first, then good ones, to ensure it reprompts
+    inputs = (
+        "INVALID\n"  # Bad origin
+        "DEL\n"  # Good origin
+        "HAN\n"  # Destination 1
+        "GARBAGE\n"  # Bad stay duration
+        "3d\n"  # Good stay duration
+        "n\n"  # Add another destination? (No)
+        "SGN\n"  # Return city
+        "forward\n"  # Direction mode
+        "n\n"  # Add departure windows? (No)
+        "not-a-date\n"  # Bad date
+        "2026-07-16\n"  # Good date
+    )
+
+    result = _run("optimize", input_data=inputs)
+    assert result.returncode == 0
+
+    # Assert validation errors appeared in stderr
+    assert "Enter a 3-letter IATA airport code" in result.stderr
+    assert "Use values like 2d, 1.5d, or 12h" in result.stderr
+    assert "Invalid date format" in result.stderr
+
+    # Assert final success
+    assert "Itinerary Summary" in result.stdout
+    assert "DEL (DEL)" in result.stdout
+
+
+def test_wizard_abort_eof():
+    # Only provide the first input, then EOF closes the stream
+    inputs = "DEL\n"
+
+    result = _run("optimize", input_data=inputs)
+
+    # SystemExit(130) is standard for SIGINT/Abort
+    assert result.returncode == 130
+    assert "Aborted" in result.stderr
