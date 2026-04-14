@@ -1,0 +1,26 @@
+{
+  "origin": { "name": "Bi-Coastal", "include": ["JFK", "LAX"] },
+  "destinations": [
+    { "city": { "name": "Hanoi", "include": ["HAN"] }, "stay": "2d" }
+  ],
+  "return_city": { "name": "Bi-Coastal", "include": ["JFK", "LAX"] },
+  "departure_date": "2026-07-16",
+  "legs": [
+    {
+      "origin": { "name": "Bi-Coastal", "include": ["JFK", "LAX"] },
+      "destination": { "name": "Hanoi", "include": ["HAN"] },
+      "departure_window": {
+        "start": "2026-07-16T00:00:00+00:00",
+        "end": "2026-07-16T06:00:00+00:00"
+      }
+    },
+    {
+      "origin": { "name": "Hanoi", "include": ["HAN"] },
+      "destination": { "name": "Bi-Coastal", "include": ["JFK", "LAX"] },
+      "departure_window": {
+        "start": "2026-07-18T00:00:00+00:00",
+        "end": "2026-07-18T06:00:00+00:00"
+      }
+    }
+  ]
+}

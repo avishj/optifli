@@ -442,6 +442,12 @@ class TestOriginTimezoneValidation:
         )
         assert it.departure_date is None
 
+    def test_multi_timezone_origin_with_legs_and_departure_date_valid(
+        self, profiles_dir: Path
+    ):
+        it = load_profile(profiles_dir / "multi_tz_origin_with_legs.json")
+        assert it.departure_date is not None
+
     def test_same_timezone_multi_airport_valid(self):
         it = Itinerary(
             origin=_LONDON,
