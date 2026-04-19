@@ -307,9 +307,12 @@ def generate_candidates(
             for warning in warnings:
                 logger.warning(warning)
         else:
+            if itinerary.departure_date is None:
+                msg = "'departure_date' is required when no explicit legs are provided"
+                raise ValueError(msg)
             origin_timezone = _resolve_city_group_timezone(itinerary.origin)
             first_window = compute_first_window(
-                itinerary.departure_date,  # type: ignore[arg-type]
+                itinerary.departure_date,
                 origin_timezone,
                 window_width,
             )
