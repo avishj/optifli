@@ -100,9 +100,6 @@ convention = "google"
     "S607",   # console scripts from PATH are intentional in CLI end-to-end tests
 ]
 
-[tool.ty.environment]
-python-version = "3.13"
-
 [tool.ty.rules]
 missing-argument = "ignore"      # Pydantic model_post_init / validators
 unknown-argument = "ignore"      # pydantic-settings underscore kwargs
