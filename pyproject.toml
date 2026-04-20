@@ -75,11 +75,15 @@ src = ["src", "tests"]
 [tool.ruff.lint]
 ignore = [
     "COM812", # conflicts with formatter
-    "D100",   # missing docstring in public module
-    "D104",   # missing docstring in public package
     "ISC001", # conflicts with formatter
 ]
 select = ["ALL"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["optifli"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**/*.py" = [
@@ -90,18 +94,11 @@ select = ["ALL"]
     "FBT",    # boolean traps in tests
     "PLR2004", # magic values in tests
     "S101",   # assert allowed in tests
-    "SLF001", # private member access in tests
 ]
 "tests/e2e/*.py" = [
     "S603",   # subprocess.run is intentional in CLI end-to-end tests
     "S607",   # console scripts from PATH are intentional in CLI end-to-end tests
 ]
-
-[tool.ruff.lint.isort]
-known-first-party = ["optifli"]
-
-[tool.ruff.lint.pydocstyle]
-convention = "google"
 
 [tool.ty.environment]
 python-version = "3.13"
@@ -152,7 +149,6 @@ show_missing = true
 skip_empty = true
 
 [tool.commitizen]
-changelog_file = "CHANGELOG.md"
 tag_format = "v$version"
 update_changelog_on_bump = true
 version = "0.0.1"
