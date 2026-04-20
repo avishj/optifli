@@ -2,12 +2,12 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-# v0.11.3
-FROM ghcr.io/astral-sh/uv:0.11.3@sha256:90bbb3c16635e9627f49eec6539f956d70746c409209041800a0280b93152823 AS uv
+# v0.11.7
+FROM ghcr.io/astral-sh/uv:0.11.7@sha256:240fb85ab0f263ef12f492d8476aa3a2e4e1e333f7d67fbdd923d00a506a516a AS uv
 
-# 3.13
-FROM mcr.microsoft.com/devcontainers/python:3.13@sha256:9b0762901a555c31c2c63824cb5b1ade77da939500e034317b8d09578b94ba0e
+# 3.0.6-3.13
+FROM mcr.microsoft.com/devcontainers/python:3.0.6-3.13@sha256:9b0762901a555c31c2c63824cb5b1ade77da939500e034317b8d09578b94ba0e
 
 COPY --from=uv /uv /uvx /usr/local/bin/
 
-RUN UV_TOOL_BIN_DIR=/usr/local/bin uv tool install rust-just==1.49.0
+RUN UV_TOOL_BIN_DIR=/usr/local/bin UV_TOOL_DIR=/opt/uv-tools uv tool install rust-just==1.49.0

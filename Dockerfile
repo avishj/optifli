@@ -2,11 +2,11 @@
 #
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-# v0.11.3
-FROM ghcr.io/astral-sh/uv:0.11.3@sha256:90bbb3c16635e9627f49eec6539f956d70746c409209041800a0280b93152823 AS uv
+# v0.11.7
+FROM ghcr.io/astral-sh/uv:0.11.7@sha256:240fb85ab0f263ef12f492d8476aa3a2e4e1e333f7d67fbdd923d00a506a516a AS uv
 
 # 3.13-slim
-FROM python:3.13-slim@sha256:739e7213785e88c0f702dcdc12c0973afcbd606dbf021a589cab77d6b00b579d AS builder
+FROM python:3.13.13-slim@sha256:2ba73a4dc380f21137fc75296abfa2add90b51fd10b609ce530b40cc097269b1 AS builder
 
 COPY --from=uv /uv /uvx /usr/local/bin/
 
@@ -27,7 +27,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --frozen --no-dev
 
 # 3.13-slim
-FROM python:3.13-slim@sha256:739e7213785e88c0f702dcdc12c0973afcbd606dbf021a589cab77d6b00b579d AS runtime
+FROM python:3.13.13-slim@sha256:2ba73a4dc380f21137fc75296abfa2add90b51fd10b609ce530b40cc097269b1 AS runtime
 
 RUN groupadd --system app && useradd --system --gid app --no-create-home app
 
