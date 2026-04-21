@@ -212,10 +212,7 @@ def validate_leg_consistency(
     """
     warnings: list[str] = []
     for i in range(len(legs) - 1):
-        if i < len(destinations):
-            required = travel_estimate + destinations[i].stay.timedelta
-        else:
-            required = travel_estimate
+        required = travel_estimate + destinations[i].stay.timedelta
         earliest_next_departure = legs[i].departure_window.start + required
         if legs[i + 1].departure_window.end < earliest_next_departure:
             warnings.append(
