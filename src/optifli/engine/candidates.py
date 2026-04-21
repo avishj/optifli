@@ -259,6 +259,84 @@ def validate_explicit_leg_route_shape(
             raise ValueError(msg)
 
 
+def _build_explicit_legs(
+    itinerary_legs: list[Leg],
+    expected_pairs: list[tuple[CityGroup, CityGroup]],
+    destinations: list[Destination],
+    travel_estimate: timedelta,
+) -> list[Leg]:
+    """Validate and reuse user-provided legs for a concrete route."""
+    validate_explicit_leg_route_shape(itinerary_legs, expected_pairs)
+    legs = list(itinerary_legs)
+    warnings = validate_leg_consistency(legs, destinations, travel_estimate)
+    for warning in warnings:
+        logger.warning(warning)
+    return legs
+
+
+def _build_propagated_legs(
+    itinerary: Itinerary,
+    expected_pairs: list[tuple[CityGroup, CityGroup]],
+    destinations: list[Destination],
+    travel_estimate: timedelta,
+    window_width: timedelta,
+) -> list[Leg]:
+    """Construct legs by propagating windows from the departure date."""
+    if itinerary.departure_date is None:
+        msg = "'departure_date' is required when no explicit legs are provided"
+        raise ValueError(msg)
+
+    origin_timezone = _resolve_city_group_timezone(itinerary.origin)
+    first_window = compute_first_window(
+        itinerary.departure_date,
+        origin_timezone,
+        window_width,
+    )
+    windows = propagate_all_windows(
+        first_window,
+        [destination.stay for destination in destinations],
+        leg_count=len(expected_pairs),
+        travel_estimate=travel_estimate,
+        window_width=window_width,
+    )
+    return [
+        Leg(
+            origin=origin,
+            destination=destination,
+            departure_window=window,
+        )
+        for (origin, destination), window in zip(
+            expected_pairs,
+            windows,
+            strict=True,
+        )
+    ]
+
+
+def _build_candidate_legs(
+    itinerary: Itinerary,
+    expected_pairs: list[tuple[CityGroup, CityGroup]],
+    destinations: list[Destination],
+    travel_estimate: timedelta,
+    window_width: timedelta,
+) -> list[Leg]:
+    """Build legs for one concrete route, from explicit legs or date propagation."""
+    if itinerary.legs:
+        return _build_explicit_legs(
+            itinerary.legs,
+            expected_pairs,
+            destinations,
+            travel_estimate,
+        )
+    return _build_propagated_legs(
+        itinerary,
+        expected_pairs,
+        destinations,
+        travel_estimate,
+        window_width,
+    )
+
+
 def generate_candidates(
     itinerary: Itinerary,
     travel_estimate: timedelta = _DEFAULT_TRAVEL_ESTIMATE,
@@ -293,42 +371,13 @@ def generate_candidates(
             destinations,
             itinerary.return_city,
         )
-        if itinerary.legs:
-            validate_explicit_leg_route_shape(itinerary.legs, pairs)
-            legs = list(itinerary.legs)
-            warnings = validate_leg_consistency(
-                legs,
-                destinations,
-                travel_estimate,
-            )
-            for warning in warnings:
-                logger.warning(warning)
-        else:
-            if itinerary.departure_date is None:
-                msg = "'departure_date' is required when no explicit legs are provided"
-                raise ValueError(msg)
-            origin_timezone = _resolve_city_group_timezone(itinerary.origin)
-            first_window = compute_first_window(
-                itinerary.departure_date,
-                origin_timezone,
-                window_width,
-            )
-            stays = [d.stay for d in destinations]
-            windows = propagate_all_windows(
-                first_window,
-                stays,
-                leg_count=len(pairs),
-                travel_estimate=travel_estimate,
-                window_width=window_width,
-            )
-            legs = [
-                Leg(
-                    origin=orig,
-                    destination=dest,
-                    departure_window=window,
-                )
-                for (orig, dest), window in zip(pairs, windows, strict=True)
-            ]
+        legs = _build_candidate_legs(
+            itinerary,
+            pairs,
+            destinations,
+            travel_estimate,
+            window_width,
+        )
 
         candidates.append(
             RouteCandidate(
