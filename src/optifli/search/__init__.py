@@ -6,14 +6,20 @@
 
 from optifli.search.models import (
     ApiFailureClassification,
+    CandidateSearchResult,
     FallbackBehavior,
+    LegSearchResult,
+    LegSearchTrace,
     SearchOutcome,
     StopMode,
 )
 
 __all__: list[str] = [
     "ApiFailureClassification",
+    "CandidateSearchResult",
     "FallbackBehavior",
+    "LegSearchResult",
+    "LegSearchTrace",
     "SearchOutcome",
     "StopMode",
 ]
