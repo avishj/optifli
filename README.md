@@ -89,6 +89,7 @@ optifli reads configuration from environment variables prefixed with `OPTIFLI_` 
 | Variable | Default | Description |
 | --- | --- | --- |
 | `OPTIFLI_VERBOSE` | `false` | Enable verbose output |
+| `OPTIFLI_LOG_FORMAT` | `pretty` | Logger output format: `pretty` or `json` |
 
 ## Documentation
 
