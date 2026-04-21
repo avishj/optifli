@@ -13,6 +13,12 @@ from optifli.search.models import (
     SearchOutcome,
     StopMode,
 )
+from optifli.search.windows import (
+    LocalQuerySlice,
+    build_local_query_slices,
+    group_airports_by_timezone,
+    split_window_by_local_date,
+)
 
 __all__: list[str] = [
     "ApiFailureClassification",
@@ -20,6 +26,10 @@ __all__: list[str] = [
     "FallbackBehavior",
     "LegSearchResult",
     "LegSearchTrace",
+    "LocalQuerySlice",
     "SearchOutcome",
     "StopMode",
+    "build_local_query_slices",
+    "group_airports_by_timezone",
+    "split_window_by_local_date",
 ]
