@@ -171,8 +171,8 @@ jobs:
           args: >-
             --verbose
             --no-progress
-            --exclude-path '^(\.venv|LICENSES?)(/.*)?$'
-            --exclude-path README.md
+            --exclude-path '^(\./)?(\.venv|LICENSES?)(/.*)?$'
+            --exclude-path '^(\./)?README\.md$'
             .
           fail: true
           jobSummary: true
