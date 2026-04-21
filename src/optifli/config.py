@@ -7,13 +7,14 @@
 import sys
 from enum import StrEnum
 
-from pydantic import ValidationError
+from pydantic import Field, ValidationError
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from rich.console import Console
 from rich.panel import Panel
 from rich.text import Text
 
 from optifli.exit_codes import ExitCode
+from optifli.search import FallbackBehavior, StopMode
 
 
 class LogFormat(StrEnum):
@@ -34,6 +35,12 @@ class Settings(BaseSettings):
 
     verbose: bool = False
     log_format: LogFormat = LogFormat.PRETTY
+    max_retries: int = Field(default=5, ge=0, le=10)
+    max_expansion_rounds: int = Field(default=2, ge=0, le=10)
+    expand_on_fallback: bool = False
+    max_requests: int = Field(default=500, ge=50, le=5000)
+    default_stop_mode: StopMode = StopMode.NON_STOP
+    fallback_behavior: FallbackBehavior = FallbackBehavior.ONE_STOP
 
 
 try:
