@@ -5,6 +5,7 @@
 """Unit tests for JSON profile loading."""
 
 import json
+from datetime import date
 from pathlib import Path
 
 import pytest
@@ -27,17 +28,19 @@ class TestLoadProfileValid:
         assert it.direction is DirectionMode.FORWARD
         assert it.route_mode is RouteMode.FIXED
         assert it.legs == []
+        assert it.departure_date == date(2026, 7, 16)
 
     def test_full(self, profiles_dir):
         it = load_profile(profiles_dir / "full.json")
         assert len(it.destinations) == 2
         assert it.destinations[1].city.name == "Da Nang"
         assert it.destinations[1].stay.total_days == 1.5
-        assert it.direction is DirectionMode.BOTH
+        assert it.direction is DirectionMode.FORWARD
         assert it.route_mode is RouteMode.FIXED
-        assert len(it.legs) == 1
+        assert len(it.legs) == 3
         assert it.legs[0].origin.airports == ["DEL"]
         assert it.legs[0].destination.airports == ["HAN"]
+        assert it.departure_date is None
 
     def test_uppercase_enums(self, profiles_dir):
         it = load_profile(profiles_dir / "uppercase_enums.json")
@@ -144,6 +147,23 @@ class TestLoadProfileValidationErrors:
         p.write_text(json.dumps(data), encoding="utf-8")
         with pytest.raises(ProfileError, match="validation failed"):
             load_profile(p)
+
+    def test_no_legs_no_departure_date(self, tmp_path):
+        data = {
+            "origin": {"name": "Delhi", "include": ["DEL"]},
+            "destinations": [
+                {"city": {"name": "Hanoi", "include": ["HAN"]}, "stay": "2d"},
+            ],
+            "return_city": {"name": "Delhi", "include": ["DEL"]},
+        }
+        p = tmp_path / "no_date.json"
+        p.write_text(json.dumps(data), encoding="utf-8")
+        with pytest.raises(ProfileError, match="validation failed"):
+            load_profile(p)
+
+    def test_multi_timezone_origin_with_date(self, profiles_dir):
+        with pytest.raises(ProfileError, match="validation failed"):
+            load_profile(profiles_dir / "multi_timezone_origin.json")
 
     def test_naive_datetime_in_leg(self, tmp_path):
         data = {

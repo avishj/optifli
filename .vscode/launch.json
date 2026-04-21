@@ -6,8 +6,7 @@
       "type": "debugpy",
       "request": "launch",
       "module": "optifli",
-      // Update args to match your CLI commands
-      "args": ["hello", "world"],
+      "args": ["optimize"],
       "console": "integratedTerminal",
       "cwd": "${workspaceFolder}",
       "env": {

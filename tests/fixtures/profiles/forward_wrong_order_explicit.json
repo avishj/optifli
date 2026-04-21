@@ -10,22 +10,22 @@
   "legs": [
     {
       "origin": { "name": "Delhi", "include": ["DEL"] },
-      "destination": { "name": "Hanoi", "include": ["HAN"] },
+      "destination": { "name": "Da Nang", "include": ["DAD"] },
       "departure_window": {
         "start": "2026-07-16T00:00:00+00:00",
         "end": "2026-07-16T06:00:00+00:00"
       }
     },
     {
-      "origin": { "name": "Hanoi", "include": ["HAN"] },
-      "destination": { "name": "Da Nang", "include": ["DAD"] },
+      "origin": { "name": "Da Nang", "include": ["DAD"] },
+      "destination": { "name": "Hanoi", "include": ["HAN"] },
       "departure_window": {
         "start": "2026-07-18T00:00:00+00:00",
         "end": "2026-07-18T06:00:00+00:00"
       }
     },
     {
-      "origin": { "name": "Da Nang", "include": ["DAD"] },
+      "origin": { "name": "Hanoi", "include": ["HAN"] },
       "destination": { "name": "Delhi", "include": ["DEL"] },
       "departure_window": {
         "start": "2026-07-20T00:00:00+00:00",

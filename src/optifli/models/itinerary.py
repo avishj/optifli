@@ -4,6 +4,7 @@
 
 """Itinerary domain models."""
 
+from datetime import date
 from enum import StrEnum
 from typing import Annotated, Self
 
@@ -12,6 +13,7 @@ from pydantic import BaseModel, BeforeValidator, ConfigDict, model_validator
 from optifli.models.airport import CityGroup
 from optifli.models.duration import Duration
 from optifli.models.window import ArrivalCutoff, DepartureWindow
+from optifli.timezones import lookup_airport_timezone
 
 
 class DirectionMode(StrEnum):
@@ -92,6 +94,7 @@ class Itinerary(BaseModel, frozen=True):
         direction: Search direction mode.
         route_mode: Whether destination order is fixed or reorderable.
         legs: Explicit per-leg departure windows (optional).
+        departure_date: Trip start date (required when no explicit legs).
     """
 
     model_config = ConfigDict(extra="forbid")
@@ -104,6 +107,7 @@ class Itinerary(BaseModel, frozen=True):
     )
     route_mode: Annotated[RouteMode, BeforeValidator(str.lower)] = RouteMode.FIXED
     legs: list[Leg] = []
+    departure_date: date | None = None
 
     @model_validator(mode="after")
     def _validate_destinations(self) -> Self:
@@ -115,6 +119,43 @@ class Itinerary(BaseModel, frozen=True):
             msg = (
                 f"'destinations' must contain at most "
                 f"{MAX_DESTINATIONS} destinations, got {count}"
+            )
+            raise ValueError(msg)
+        return self
+
+    @model_validator(mode="after")
+    def _validate_departure_date_required(self) -> Self:
+        if not self.legs and self.departure_date is None:
+            msg = "'departure_date' is required when no explicit legs are provided"
+            raise ValueError(msg)
+        return self
+
+    @model_validator(mode="after")
+    def _validate_legs_constraints(self) -> Self:
+        if self.legs:
+            if self.route_mode is RouteMode.REORDER:
+                msg = "'route_mode' cannot be 'reorder' when explicit legs are provided"
+                raise ValueError(msg)
+            if self.direction is DirectionMode.BOTH:
+                msg = (
+                    "'direction=both' is not supported when explicit legs are provided"
+                )
+                raise ValueError(msg)
+        return self
+
+    @model_validator(mode="after")
+    def _validate_origin_single_timezone(self) -> Self:
+        if self.departure_date is None or self.legs:
+            return self
+        timezone_names = {
+            lookup_airport_timezone(code) for code in self.origin.airports
+        }
+        if len(timezone_names) != 1:
+            joined = ", ".join(sorted(timezone_names))
+            msg = (
+                f"Cannot use 'departure_date' with origin city group "
+                f"'{self.origin.name}' because its airports span multiple "
+                f"timezones ({joined}). Provide explicit legs instead."
             )
             raise ValueError(msg)
         return self

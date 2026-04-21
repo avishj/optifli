@@ -4,6 +4,7 @@
 
 """Interactive itinerary collection for the CLI."""
 
+from datetime import date
 from itertools import pairwise
 
 from pydantic import ValidationError
@@ -23,6 +24,7 @@ from optifli.models.itinerary import (
 )
 from optifli.models.window import ArrivalCutoff, DepartureWindow
 
+_DATE_HINT = "Use ISO format YYYY-MM-DD, e.g. 2026-07-16"
 _WINDOW_HINT = "Use timezone-aware ISO datetimes and keep end after start"
 _CUTOFF_HINT = "Use an ISO 8601 datetime with timezone, e.g. 2026-07-16T19:00:00+05:30"
 _error_console = Console(stderr=True)
@@ -79,14 +81,11 @@ def _prompt_direction_mode() -> DirectionMode:
 
 
 def _prompt_route_mode() -> RouteMode:
-    """Prompt until a valid route mode is selected."""
-    choices = [mode.value for mode in RouteMode]
-    value = Prompt.ask(
-        "Route mode",
-        choices=choices,
-        default=RouteMode.FIXED.value,
-    )
-    return RouteMode(value)
+    """Prompt until a valid route mode is selected.
+
+    Only ``fixed`` is offered; ``reorder`` is not yet supported.
+    """
+    return RouteMode.FIXED
 
 
 def _prompt_destination(index: int) -> Destination:
@@ -94,6 +93,20 @@ def _prompt_destination(index: int) -> Destination:
     city = _prompt_city(f"Destination {index} airport code")
     stay = _prompt_duration(f"Destination {index} stay duration")
     return Destination(city=city, stay=stay)
+
+
+def _prompt_departure_date() -> date:
+    """Prompt until a valid trip start date is provided."""
+    while True:
+        value = Prompt.ask("Trip start date (YYYY-MM-DD)")
+        try:
+            return date.fromisoformat(value.strip())
+        except ValueError:
+            _print_error(
+                field="Trip start date",
+                reason="Invalid date format",
+                hint=_DATE_HINT,
+            )
 
 
 def _prompt_departure_window(
@@ -137,13 +150,32 @@ def _prompt_arrival_cutoff(
             )
 
 
+def _ordered_stops(
+    origin: CityGroup,
+    destinations: list[Destination],
+    return_city: CityGroup,
+    direction: DirectionMode,
+) -> list[CityGroup]:
+    ordered_destinations = (
+        list(destinations)
+        if direction is DirectionMode.FORWARD
+        else list(reversed(destinations))
+    )
+    return [
+        origin,
+        *(destination.city for destination in ordered_destinations),
+        return_city,
+    ]
+
+
 def _prompt_legs(
     origin: CityGroup,
     destinations: list[Destination],
     return_city: CityGroup,
+    direction: DirectionMode,
 ) -> list[Leg]:
-    """Prompt for explicit departure windows for each forward leg."""
-    stops = [origin, *(destination.city for destination in destinations), return_city]
+    """Prompt for explicit departure windows in the chosen concrete route order."""
+    stops = _ordered_stops(origin, destinations, return_city, direction)
     legs: list[Leg] = []
 
     for index, (leg_origin, leg_destination) in enumerate(pairwise(stops), start=1):
@@ -175,20 +207,16 @@ def _collect() -> Itinerary:
         destinations.append(_prompt_destination(len(destinations) + 1))
 
     return_city = _prompt_city("Return airport code")
-    legs = []
-    if Confirm.ask("Add departure windows?", default=False):
-        legs = _prompt_legs(origin, destinations, return_city)
     direction = _prompt_direction_mode()
+    legs = []
+    if direction is not DirectionMode.BOTH and Confirm.ask(
+        "Add departure windows?",
+        default=False,
+    ):
+        legs = _prompt_legs(origin, destinations, return_city, direction)
     route_mode = _prompt_route_mode()
 
-    if route_mode is RouteMode.REORDER and legs:
-        if Confirm.ask(
-            "Reorder mode is incompatible with explicit legs. Drop legs?",
-            default=False,
-        ):
-            legs = []
-        else:
-            route_mode = RouteMode.FIXED
+    departure_date = _prompt_departure_date() if not legs else None
 
     return Itinerary(
         origin=origin,
@@ -197,6 +225,7 @@ def _collect() -> Itinerary:
         direction=direction,
         route_mode=route_mode,
         legs=legs,
+        departure_date=departure_date,
     )
 
 

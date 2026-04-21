@@ -11,9 +11,10 @@ import pytest
 pytestmark = pytest.mark.e2e
 
 
-def _run(*args: str) -> subprocess.CompletedProcess[str]:
+def _run(*args: str, input_data: str | None = None) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
         ["optifli", *args],
+        input=input_data,
         capture_output=True,
         text=True,
         check=False,
@@ -39,8 +40,7 @@ def test_optimize_full_profile(profiles_dir):
     assert "Delhi" in result.stdout
     assert "Hanoi" in result.stdout
     assert "Da Nang" in result.stdout
-    assert "Forward" in result.stdout
-    assert "Reverse" in result.stdout
+    assert "forward" in result.stdout
 
 
 def test_no_args_shows_help():
@@ -66,7 +66,7 @@ def test_verbose_flag(profiles_dir):
 def test_optimize_reverse_profile(profiles_dir):
     result = _run("optimize", "--profile", str(profiles_dir / "reverse.json"))
     assert result.returncode == 0
-    assert "Reverse" in result.stdout
+    assert "reverse" in result.stdout
     assert "Da Nang" in result.stdout
     assert "Hanoi" in result.stdout
 
@@ -98,3 +98,86 @@ def test_invalid_env_config():
 def test_invalid_command():
     result = _run("nonexistent")
     assert result.returncode != 0
+
+
+def test_wizard_happy_path_forward():
+    inputs = (
+        "DEL\n"  # Origin
+        "HAN\n"  # Destination 1
+        "3d\n"  # Stay at Destination 1
+        "n\n"  # Add another destination? (No)
+        "SGN\n"  # Return city
+        "forward\n"  # Direction mode
+        "n\n"  # Add departure windows? (No)
+        "2026-07-16\n"  # Departure date
+    )
+
+    result = _run("optimize", input_data=inputs)
+    assert result.returncode == 0
+    assert "Itinerary Summary" in result.stdout
+    assert "DEL (DEL)" in result.stdout
+    assert "HAN (HAN)" in result.stdout
+    assert "SGN (SGN)" in result.stdout
+    assert "forward" in result.stdout
+
+
+def test_wizard_happy_path_both():
+    inputs = (
+        "JFK\n"  # Origin
+        "LHR\n"  # Destination 1
+        "2d\n"  # Stay at Destination 1
+        "y\n"  # Add another destination? (Yes)
+        "CDG\n"  # Destination 2
+        "3d\n"  # Stay at Destination 2
+        "n\n"  # Add another destination? (No)
+        "FRA\n"  # Return city
+        "both\n"  # Direction mode
+        "2026-08-01\n"  # Departure date
+    )
+
+    result = _run("optimize", input_data=inputs)
+    assert result.returncode == 0
+    assert "Itinerary Summary" in result.stdout
+    assert "Direction Comparison" in result.stdout
+    assert "JFK (JFK)" in result.stdout
+    assert "both" in result.stdout
+
+
+def test_wizard_validation_retry():
+    # Provide bad inputs first, then good ones, to ensure it reprompts
+    inputs = (
+        "INVALID\n"  # Bad origin
+        "DEL\n"  # Good origin
+        "HAN\n"  # Destination 1
+        "GARBAGE\n"  # Bad stay duration
+        "3d\n"  # Good stay duration
+        "n\n"  # Add another destination? (No)
+        "SGN\n"  # Return city
+        "forward\n"  # Direction mode
+        "n\n"  # Add departure windows? (No)
+        "not-a-date\n"  # Bad date
+        "2026-07-16\n"  # Good date
+    )
+
+    result = _run("optimize", input_data=inputs)
+    assert result.returncode == 0
+
+    # Assert validation errors appeared in stderr
+    assert "Enter a 3-letter IATA airport code" in result.stderr
+    assert "Use values like 2d, 1.5d, or 12h" in result.stderr
+    assert "Invalid date format" in result.stderr
+
+    # Assert final success
+    assert "Itinerary Summary" in result.stdout
+    assert "DEL (DEL)" in result.stdout
+
+
+def test_wizard_abort_eof():
+    # Only provide the first input, then EOF closes the stream
+    inputs = "DEL\n"
+
+    result = _run("optimize", input_data=inputs)
+
+    # SystemExit(130) is standard for SIGINT/Abort
+    assert result.returncode == 130
+    assert "Aborted" in result.stderr

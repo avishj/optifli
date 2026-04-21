@@ -4,6 +4,8 @@
 
 """Unit tests for the interactive itinerary wizard."""
 
+from datetime import date
+
 import pytest
 
 from optifli.models.itinerary import DirectionMode, RouteMode
@@ -16,6 +18,7 @@ def _patch_prompts(monkeypatch, prompt_answers, confirm_answers):
     prompt_iter = iter(prompt_answers)
     confirm_iter = iter(confirm_answers)
     prompt_calls = []
+    confirm_calls = []
 
     def fake_prompt_ask(prompt, **_kwargs):
         prompt_calls.append(prompt)
@@ -26,6 +29,7 @@ def _patch_prompts(monkeypatch, prompt_answers, confirm_answers):
             raise AssertionError(msg) from None
 
     def fake_confirm_ask(_prompt, **_kwargs):
+        confirm_calls.append(_prompt)
         try:
             return next(confirm_iter)
         except StopIteration:
@@ -34,15 +38,15 @@ def _patch_prompts(monkeypatch, prompt_answers, confirm_answers):
 
     monkeypatch.setattr("optifli.wizard.Prompt.ask", fake_prompt_ask)
     monkeypatch.setattr("optifli.wizard.Confirm.ask", fake_confirm_ask)
-    return prompt_calls
+    return prompt_calls, confirm_calls
 
 
 class TestCollectItineraryValid:
     def test_collects_single_destination_without_windows(self, monkeypatch):
-        prompt_calls = _patch_prompts(
+        prompt_calls, confirm_calls = _patch_prompts(
             monkeypatch,
-            prompt_answers=["del", "han", "2d", "del", "both", "reorder"],
-            confirm_answers=[False, False],
+            prompt_answers=["del", "han", "2d", "del", "both", "2026-07-16"],
+            confirm_answers=[False],
         )
 
         itinerary = collect_itinerary()
@@ -55,31 +59,32 @@ class TestCollectItineraryValid:
         assert itinerary.return_city.airports == ["DEL"]
         assert itinerary.legs == []
         assert itinerary.direction is DirectionMode.BOTH
-        assert itinerary.route_mode is RouteMode.REORDER
+        assert itinerary.route_mode is RouteMode.FIXED
+        assert itinerary.departure_date == date(2026, 7, 16)
         assert prompt_calls == [
             "Origin airport code",
             "Destination 1 airport code",
             "Destination 1 stay duration",
             "Return airport code",
             "Direction mode",
-            "Route mode",
+            "Trip start date (YYYY-MM-DD)",
         ]
+        assert confirm_calls == ["Add another destination?"]
 
     def test_collects_departure_windows(self, monkeypatch):
-        prompt_calls = _patch_prompts(
+        prompt_calls, _ = _patch_prompts(
             monkeypatch,
             prompt_answers=[
                 "del",
                 "han",
                 "2d",
                 "del",
+                "forward",
                 "2026-07-16T19:00:00+05:30",
                 "2026-07-16T23:00:00+05:30",
                 "2026-07-17T08:00:00+05:30",
                 "2026-07-18T09:00:00+05:30",
                 "2026-07-18T18:00:00+05:30",
-                "forward",
-                "fixed",
             ],
             confirm_answers=[False, True, True, False],
         )
@@ -98,94 +103,56 @@ class TestCollectItineraryValid:
         assert itinerary.legs[1].origin.airports == ["HAN"]
         assert itinerary.legs[1].destination.airports == ["DEL"]
         assert itinerary.legs[1].arrival_cutoff is None
+        assert itinerary.departure_date is None
         assert prompt_calls.count("Leg 1 departure start (DEL -> HAN)") == 1
         assert prompt_calls.count("Leg 2 departure start (HAN -> DEL)") == 1
+        assert "Trip start date (YYYY-MM-DD)" not in prompt_calls
 
-
-class TestCollectItineraryReorderConflict:
-    def test_reorder_drops_legs_on_confirm(self, monkeypatch):
-        _patch_prompts(
+    def test_collects_reverse_departure_windows_in_reverse_order(self, monkeypatch):
+        prompt_calls, _ = _patch_prompts(
             monkeypatch,
             prompt_answers=[
                 "del",
                 "han",
                 "2d",
+                "dad",
+                "1.5d",
                 "del",
+                "reverse",
                 "2026-07-16T19:00:00+05:30",
                 "2026-07-16T23:00:00+05:30",
                 "2026-07-18T09:00:00+05:30",
                 "2026-07-18T18:00:00+05:30",
-                "forward",
-                "reorder",
+                "2026-07-20T09:00:00+05:30",
+                "2026-07-20T18:00:00+05:30",
             ],
-            confirm_answers=[
-                False,  # no more destinations
-                True,  # add departure windows
-                False,  # no arrival cutoff leg 1
-                False,  # no arrival cutoff leg 2
-                True,  # drop legs? yes
-            ],
+            confirm_answers=[True, False, True, False, False, False],
         )
 
         itinerary = collect_itinerary()
 
-        assert itinerary.route_mode is RouteMode.REORDER
-        assert itinerary.legs == []
+        assert [leg.origin.airports[0] for leg in itinerary.legs] == [
+            "DEL",
+            "DAD",
+            "HAN",
+        ]
+        assert prompt_calls.count("Leg 1 departure start (DEL -> DAD)") == 1
+        assert prompt_calls.count("Leg 2 departure start (DAD -> HAN)") == 1
+        assert prompt_calls.count("Leg 3 departure start (HAN -> DEL)") == 1
+        assert "Leg 1 departure start (DEL -> HAN)" not in prompt_calls
 
-    def test_reorder_fallback_keeps_legs_on_decline(self, monkeypatch):
+
+class TestWizardRouteMode:
+    def test_wizard_always_uses_fixed(self, monkeypatch):
         _patch_prompts(
             monkeypatch,
-            prompt_answers=[
-                "del",
-                "han",
-                "2d",
-                "del",
-                "2026-07-16T19:00:00+05:30",
-                "2026-07-16T23:00:00+05:30",
-                "2026-07-18T09:00:00+05:30",
-                "2026-07-18T18:00:00+05:30",
-                "forward",
-                "reorder",
-            ],
-            confirm_answers=[
-                False,  # no more destinations
-                True,  # add departure windows
-                False,  # no arrival cutoff leg 1
-                False,  # no arrival cutoff leg 2
-                False,  # drop legs? no — fall back to fixed
-            ],
+            prompt_answers=["del", "han", "2d", "del", "forward", "2026-07-16"],
+            confirm_answers=[False, False],
         )
 
         itinerary = collect_itinerary()
 
         assert itinerary.route_mode is RouteMode.FIXED
-        assert len(itinerary.legs) == 2
-        assert itinerary.legs[0].origin.airports == ["DEL"]
-        assert itinerary.legs[0].destination.airports == ["HAN"]
-        assert itinerary.legs[1].origin.airports == ["HAN"]
-        assert itinerary.legs[1].destination.airports == ["DEL"]
-
-    def test_reorder_without_legs_skips_conflict_prompt(self, monkeypatch):
-        _patch_prompts(
-            monkeypatch,
-            prompt_answers=[
-                "del",
-                "han",
-                "2d",
-                "del",
-                "forward",
-                "reorder",
-            ],
-            confirm_answers=[
-                False,  # no more destinations
-                False,  # no departure windows — so no legs
-            ],
-        )
-
-        itinerary = collect_itinerary()
-
-        assert itinerary.route_mode is RouteMode.REORDER
-        assert itinerary.legs == []
 
 
 class TestCollectItineraryAbort:
@@ -212,7 +179,7 @@ class TestCollectItineraryAbort:
 
 class TestCollectItineraryValidation:
     def test_reprompts_after_invalid_input(self, monkeypatch, capsys):
-        prompt_calls = _patch_prompts(
+        prompt_calls, _ = _patch_prompts(
             monkeypatch,
             prompt_answers=[
                 "de",
@@ -223,7 +190,7 @@ class TestCollectItineraryValidation:
                 "12a",
                 "del",
                 "forward",
-                "fixed",
+                "2026-07-16",
             ],
             confirm_answers=[False, False],
         )
@@ -242,21 +209,20 @@ class TestCollectItineraryValidation:
         assert "Invalid duration format" in captured.err
 
     def test_reprompts_after_invalid_datetime(self, monkeypatch, capsys):
-        prompt_calls = _patch_prompts(
+        prompt_calls, _ = _patch_prompts(
             monkeypatch,
             prompt_answers=[
                 "del",
                 "han",
                 "2d",
                 "del",
+                "forward",
                 "2026-07-16T19:00:00",
                 "2026-07-16T23:00:00",
                 "2026-07-16T19:00:00+05:30",
                 "2026-07-16T23:00:00+05:30",
                 "2026-07-18T09:00:00+05:30",
                 "2026-07-18T18:00:00+05:30",
-                "forward",
-                "fixed",
             ],
             confirm_answers=[False, True, False, False],
         )
@@ -269,3 +235,25 @@ class TestCollectItineraryValidation:
         assert prompt_calls.count("Leg 1 departure end (DEL -> HAN)") == 2
         assert "timezone-aware" in captured.err
         assert "Use timezone-aware ISO datetimes" in captured.err
+
+    def test_reprompts_after_invalid_date(self, monkeypatch, capsys):
+        prompt_calls, _ = _patch_prompts(
+            monkeypatch,
+            prompt_answers=[
+                "del",
+                "han",
+                "2d",
+                "del",
+                "forward",
+                "not-a-date",
+                "2026-07-16",
+            ],
+            confirm_answers=[False, False],
+        )
+
+        itinerary = collect_itinerary()
+        captured = capsys.readouterr()
+
+        assert itinerary.departure_date == date(2026, 7, 16)
+        assert prompt_calls.count("Trip start date (YYYY-MM-DD)") == 2
+        assert "Invalid date format" in captured.err

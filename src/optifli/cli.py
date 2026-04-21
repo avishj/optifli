@@ -149,11 +149,11 @@ def main(
         bool,
         Parameter("--verbose", help="Enable verbose output."),
     ] = settings.verbose,
-) -> ExitCode:
+) -> None:
     """Run the optifli CLI."""
     settings.verbose = verbose
     setup_logging(verbose=verbose, log_format=settings.log_format)
-    return app(tokens)
+    app(tokens, result_action="print_non_int_sys_exit")
 
 
 def entrypoint() -> None:
