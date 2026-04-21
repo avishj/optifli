@@ -153,7 +153,7 @@ def main(
     """Run the optifli CLI."""
     settings.verbose = verbose
     setup_logging(verbose=verbose, log_format=settings.log_format)
-    app(tokens)
+    app(tokens, result_action="print_non_int_sys_exit")
 
 
 def entrypoint() -> None:
