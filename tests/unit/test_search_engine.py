@@ -220,3 +220,112 @@ class TestMultiLeg:
 
         assert result.legs[0].trace.fallback_used is True
         assert result.legs[1].trace.fallback_used is False
+
+
+# ---------------------------------------------------------------------------
+# Partial results and request budgets
+# ---------------------------------------------------------------------------
+
+_THREE_LEG_START = datetime(2026, 7, 22, 6, 0, tzinfo=UTC)
+_THREE_LEG_END = datetime(2026, 7, 22, 18, 0, tzinfo=UTC)
+
+
+class TestPartialResults:
+    def _three_leg_candidate(self) -> RouteCandidate:
+        leg1 = _leg(origin=_DEL, destination=_HAN)
+        leg2 = _leg(
+            origin=_HAN,
+            destination=_BKK,
+            start=_SECOND_START,
+            end=_SECOND_END,
+        )
+        leg3 = _leg(
+            origin=_BKK,
+            destination=_DEL,
+            start=_THREE_LEG_START,
+            end=_THREE_LEG_END,
+        )
+        return _candidate(leg1, leg2, leg3)
+
+    def test_budget_exhaustion_stops_early(self):
+        hit = SearchResponse(options=(_option(),), failure=None)
+        # Leg 1 (DEL): 1 slice hit. Budget=1 exhausted before leg 2.
+        adapter = _adapter_returning(hit)
+
+        all_opts, result = search_candidate(
+            self._three_leg_candidate(),
+            adapter,
+            max_requests=1,
+        )
+
+        assert len(all_opts) == 1
+        assert len(result.legs) == 1
+        assert result.completed is False
+        assert result.request_budget_exhausted is True
+        assert result.partial is True
+
+    def test_budget_allows_full_completion(self):
+        hit = SearchResponse(options=(_option(),), failure=None)
+        # Leg 1 (DEL): 1 slice. Leg 2 (HAN +07:00): 2 slices.
+        # Leg 3 (BKK +07:00): 2 slices. Total = 5 queries.
+        adapter = _adapter_returning(hit, hit, _EMPTY, hit, _EMPTY)
+
+        _all_opts, result = search_candidate(
+            self._three_leg_candidate(),
+            adapter,
+            max_requests=100,
+        )
+
+        assert result.completed is True
+        assert result.request_budget_exhausted is False
+        assert len(result.legs) == 3
+
+    def test_no_budget_searches_all(self):
+        # Leg 1: 1 slice. Leg 2: 2 slices. Leg 3: 2 slices.
+        adapter = _adapter_returning(_EMPTY, _EMPTY, _EMPTY, _EMPTY, _EMPTY)
+
+        _all_opts, result = search_candidate(
+            self._three_leg_candidate(),
+            adapter,
+        )
+
+        assert result.completed is True
+        assert result.request_budget_exhausted is False
+        assert len(result.legs) == 3
+
+    def test_mixed_success_failure_preserves_partial(self):
+        hit = SearchResponse(options=(_option(),), failure=None)
+        fail = SearchResponse(
+            options=(),
+            failure=ApiFailureClassification.RATE_LIMITED,
+        )
+        # Leg 1 (DEL): hit. Budget=1 exhausted before leg 2.
+        adapter = _adapter_returning(hit, fail)
+
+        all_opts, result = search_candidate(
+            self._three_leg_candidate(),
+            adapter,
+            max_requests=1,
+        )
+
+        assert len(all_opts) == 1
+        assert len(all_opts[0]) == 1
+        assert result.completed is False
+        assert result.legs[0].trace.final_status is SearchOutcome.RESULTS_FOUND
+
+    def test_budget_exhausted_after_two_legs(self):
+        hit = SearchResponse(options=(_option(),), failure=None)
+        # Leg 1 (DEL): 1 slice. Leg 2 (HAN +07:00): 2 slices. Total = 3.
+        # Budget=3 exhausted before leg 3.
+        adapter = _adapter_returning(hit, hit, _EMPTY)
+
+        all_opts, result = search_candidate(
+            self._three_leg_candidate(),
+            adapter,
+            max_requests=3,
+        )
+
+        assert len(all_opts) == 2
+        assert len(result.legs) == 2
+        assert result.completed is False
+        assert result.request_budget_exhausted is True
