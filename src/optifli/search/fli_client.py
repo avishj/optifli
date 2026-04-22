@@ -33,12 +33,16 @@ class FliClient:
 
         Returns an empty list when the provider finds no inventory.
         """
-        logger.debug(
-            "FLI search: %s → %s on %s",
-            filters.flight_segments[0].departure_airport,
-            filters.flight_segments[0].arrival_airport,
-            filters.flight_segments[0].travel_date,
-        )
+        segment = next(iter(filters.flight_segments), None)
+        if segment is not None:
+            logger.debug(
+                "FLI search: %s → %s on %s",
+                segment.departure_airport,
+                segment.arrival_airport,
+                segment.travel_date,
+            )
+        else:
+            logger.debug("FLI search: no flight segments configured")
         raw = self._search.search(filters)
         if raw is None:
             return []
