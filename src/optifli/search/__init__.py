@@ -4,6 +4,7 @@
 
 """Search-domain models and execution helpers."""
 
+from optifli.search.engine import search_candidate
 from optifli.search.fli_adapter import (
     FliAdapter,
     LegOption,
@@ -24,6 +25,7 @@ from optifli.search.models import (
     SearchOutcome,
     StopMode,
 )
+from optifli.search.policy import search_leg
 from optifli.search.windows import (
     LocalQuerySlice,
     build_local_query_slices,
@@ -51,5 +53,7 @@ __all__: list[str] = [
     "group_airports_by_timezone",
     "normalize_leg",
     "normalize_result",
+    "search_candidate",
+    "search_leg",
     "split_window_by_local_date",
 ]
