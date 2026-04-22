@@ -18,7 +18,11 @@ from optifli.search.fli_adapter import (
     SearchResponse,
     SegmentDetail,
 )
-from optifli.search.models import ApiFailureClassification, SearchOutcome
+from optifli.search.models import (
+    ApiFailureClassification,
+    FallbackBehavior,
+    SearchOutcome,
+)
 from optifli.search.policy import search_leg
 
 pytestmark = pytest.mark.unit
@@ -79,7 +83,7 @@ def _adapter_returning(
 ) -> FliAdapter:
     mock_client = MagicMock()
     adapter = FliAdapter(client=mock_client)
-    adapter.search = MagicMock(side_effect=list(responses))  # type: ignore[method-assign]
+    adapter.search = MagicMock(side_effect=list(responses))  # type: ignore[method-assign]  # ty: ignore[invalid-assignment]
     return adapter
 
 
@@ -263,4 +267,153 @@ class TestSearchLegExpansion:
 
         assert trace.attempted_queries == 3
         assert trace.successful_queries == 2
+        assert trace.failed_queries == 1
+
+
+# ---------------------------------------------------------------------------
+# One-stop fallback
+# ---------------------------------------------------------------------------
+
+_FALLBACK = FallbackBehavior.ONE_STOP
+
+
+class TestSearchLegFallback:
+    """Fallback tests.
+
+    DEL (+05:30) slice counts for the default 06:00-18:00 UTC window:
+    - nonstop base: 1 slice
+    - fallback base (same window, one-stop): 1 slice
+    - fallback expansion round 1 (05-19 UTC): 2 slices
+    """
+
+    def test_hit_returns_results_with_fallback_used(self):
+        # Nonstop miss (1), fallback hit (1).
+        resp_hit = SearchResponse(options=(_option(),), failure=None)
+        adapter = _adapter_returning(_EMPTY, resp_hit)
+
+        options, trace = search_leg(_leg(), adapter, fallback=_FALLBACK)
+
+        assert len(options) == 1
+        assert trace.final_status is SearchOutcome.RESULTS_FOUND
+        assert trace.fallback_used is True
+        assert trace.fallback_exhausted is False
+
+    def test_exhaustion_returns_no_results_after_fallback(self):
+        # Nonstop miss (1), fallback miss (1).
+        adapter = _adapter_returning(_EMPTY, _EMPTY)
+
+        options, trace = search_leg(_leg(), adapter, fallback=_FALLBACK)
+
+        assert len(options) == 0
+        assert trace.final_status is SearchOutcome.NO_RESULTS_AFTER_FALLBACK
+        assert trace.fallback_used is True
+        assert trace.fallback_exhausted is True
+
+    def test_disabled_skips_fallback(self):
+        adapter = _adapter_returning(_EMPTY)
+
+        _options, trace = search_leg(
+            _leg(),
+            adapter,
+            fallback=FallbackBehavior.DISABLED,
+        )
+
+        assert trace.final_status is SearchOutcome.NO_RESULTS_BASE_WINDOW
+        assert trace.fallback_used is False
+
+    def test_nonstop_hit_skips_fallback(self):
+        resp_hit = SearchResponse(options=(_option(),), failure=None)
+        adapter = _adapter_returning(resp_hit)
+
+        _options, trace = search_leg(_leg(), adapter, fallback=_FALLBACK)
+
+        assert trace.final_status is SearchOutcome.RESULTS_FOUND
+        assert trace.fallback_used is False
+        assert adapter.search.call_count == 1  # ty: ignore[unresolved-attribute]
+
+    def test_expansion_then_fallback(self):
+        # Nonstop base miss (1), expansion round 1 miss (2),
+        # fallback on expanded window (2 slices), hit on first.
+        resp_hit = SearchResponse(options=(_option(),), failure=None)
+        adapter = _adapter_returning(_EMPTY, _EMPTY, _EMPTY, resp_hit, _EMPTY)
+
+        options, trace = search_leg(
+            _leg(),
+            adapter,
+            max_expansion_rounds=1,
+            fallback=_FALLBACK,
+        )
+
+        assert len(options) == 1
+        assert trace.expansion_rounds == 1
+        assert trace.fallback_used is True
+        assert trace.fallback_exhausted is False
+        assert trace.final_status is SearchOutcome.RESULTS_FOUND
+
+    def test_expand_on_fallback(self):
+        # max_expansion_rounds=1 applies to both phases.
+        # Nonstop base miss (1), nonstop exp r1 miss (2),
+        # fallback base on expanded window miss (2),
+        # fallback exp r1 hit on first of 2.
+        resp_hit = SearchResponse(options=(_option(),), failure=None)
+        adapter = _adapter_returning(
+            _EMPTY,
+            _EMPTY,
+            _EMPTY,
+            _EMPTY,
+            _EMPTY,
+            resp_hit,
+            _EMPTY,
+        )
+
+        options, trace = search_leg(
+            _leg(),
+            adapter,
+            fallback=_FALLBACK,
+            expand_on_fallback=True,
+            max_expansion_rounds=1,
+        )
+
+        assert len(options) == 1
+        assert trace.fallback_used is True
+        assert trace.final_status is SearchOutcome.RESULTS_FOUND
+
+    def test_expand_on_fallback_exhaustion(self):
+        # Nonstop base miss (1), nonstop exp r1 miss (2),
+        # fallback base on expanded window miss (2),
+        # fallback exp r1 miss (2).
+        adapter = _adapter_returning(
+            _EMPTY,
+            _EMPTY,
+            _EMPTY,
+            _EMPTY,
+            _EMPTY,
+            _EMPTY,
+            _EMPTY,
+        )
+
+        _options, trace = search_leg(
+            _leg(),
+            adapter,
+            fallback=_FALLBACK,
+            expand_on_fallback=True,
+            max_expansion_rounds=1,
+        )
+
+        assert trace.fallback_used is True
+        assert trace.fallback_exhausted is True
+        assert trace.final_status is SearchOutcome.NO_RESULTS_AFTER_FALLBACK
+
+    def test_trace_counts_span_all_phases(self):
+        # Nonstop miss (1), fallback fail (1).
+        fail_resp = SearchResponse(
+            options=(),
+            failure=ApiFailureClassification.UNKNOWN,
+        )
+        adapter = _adapter_returning(_EMPTY, fail_resp)
+
+        _options, trace = search_leg(_leg(), adapter, fallback=_FALLBACK)
+
+        assert trace.attempted_queries == 2
+        assert trace.successful_queries == 1
         assert trace.failed_queries == 1
