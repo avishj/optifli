@@ -171,10 +171,10 @@ def search_leg(
     max_expansion_rounds: int = 0,
     fallback: FallbackBehavior = FallbackBehavior.DISABLED,
     expand_on_fallback: bool = False,
-) -> tuple[list[LegOption], LegSearchTrace]:
+) -> tuple[list[LegOption], LegSearchTrace, ApiFailureClassification | None]:
     """Execute search policy for a single leg.
 
-    Returns the collected options and a trace of the execution.
+    Returns the collected options, a trace, and the last failure classification.
     """
     acc = _SearchAccumulator()
 
@@ -229,7 +229,7 @@ def search_leg(
         fallback_used,
     )
 
-    return acc.options, trace
+    return acc.options, trace, acc.last_failure
 
 
 def _resolve_outcome(
