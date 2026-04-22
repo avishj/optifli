@@ -4,7 +4,7 @@
 
 """Unit tests for the leg search policy."""
 
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from unittest.mock import MagicMock
 
 import pytest
@@ -162,3 +162,105 @@ class TestSearchLegBaseWindow:
         assert trace.fallback_used is False
         assert trace.fallback_exhausted is False
         assert trace.expansion_rounds == 0
+
+
+# ---------------------------------------------------------------------------
+# Expansion rounds
+# ---------------------------------------------------------------------------
+
+_EMPTY = SearchResponse(options=(), failure=None)
+
+
+class TestSearchLegExpansion:
+    """Expansion tests.
+
+    DEL (+05:30) slice counts for the default 06:00-18:00 UTC window:
+    - base (06-18 UTC -> 11:30-23:30 +05:30): 1 slice
+    - round 1 (05-19 UTC -> 10:30-00:30+1 +05:30): 2 slices
+    - round 2 (04-20 UTC -> 09:30-01:30+1 +05:30): 2 slices
+    """
+
+    def test_round1_widens_by_1h(self):
+        # Base: 1 miss. Round 1: 2 slices, hit on first.
+        resp_hit = SearchResponse(options=(_option(),), failure=None)
+        adapter = _adapter_returning(_EMPTY, resp_hit, _EMPTY)
+
+        options, trace = search_leg(
+            _leg(),
+            adapter,
+            max_expansion_rounds=2,
+        )
+
+        assert trace.expansion_rounds == 1
+        assert trace.final_status is SearchOutcome.RESULTS_FOUND
+        assert trace.base_window_hit is False
+        assert len(options) >= 1
+        assert trace.window_start == _BASE_START - timedelta(hours=1)
+        assert trace.window_end == _BASE_END + timedelta(hours=1)
+
+    def test_round2_widens_by_2h(self):
+        # Base: 1 miss. Round 1: 2 misses. Round 2: hit on first of 2.
+        resp_hit = SearchResponse(options=(_option(),), failure=None)
+        adapter = _adapter_returning(
+            _EMPTY,
+            _EMPTY,
+            _EMPTY,
+            resp_hit,
+            _EMPTY,
+        )
+
+        _options, trace = search_leg(
+            _leg(),
+            adapter,
+            max_expansion_rounds=2,
+        )
+
+        assert trace.expansion_rounds == 2
+        assert trace.final_status is SearchOutcome.RESULTS_FOUND
+        assert trace.window_start == _BASE_START - timedelta(hours=2)
+        assert trace.window_end == _BASE_END + timedelta(hours=2)
+
+    def test_stops_at_configured_cap(self):
+        # Base: 1 miss. Round 1: 2 misses. Cap=1 so no round 2.
+        adapter = _adapter_returning(_EMPTY, _EMPTY, _EMPTY)
+
+        options, trace = search_leg(
+            _leg(),
+            adapter,
+            max_expansion_rounds=1,
+        )
+
+        assert trace.expansion_rounds == 1
+        assert trace.final_status is SearchOutcome.NO_RESULTS_AFTER_EXPANSION
+        assert len(options) == 0
+
+    def test_zero_cap_skips_expansion(self):
+        adapter = _adapter_returning(_EMPTY)
+
+        _options, trace = search_leg(
+            _leg(),
+            adapter,
+            max_expansion_rounds=0,
+        )
+
+        assert trace.expansion_rounds == 0
+        assert trace.final_status is SearchOutcome.NO_RESULTS_BASE_WINDOW
+
+    def test_trace_counts_across_rounds(self):
+        # Base: 1 miss. Round 1: 1 fail + 1 hit (2 slices).
+        fail_resp = SearchResponse(
+            options=(),
+            failure=ApiFailureClassification.RATE_LIMITED,
+        )
+        hit_resp = SearchResponse(options=(_option(),), failure=None)
+        adapter = _adapter_returning(_EMPTY, fail_resp, hit_resp)
+
+        _options, trace = search_leg(
+            _leg(),
+            adapter,
+            max_expansion_rounds=2,
+        )
+
+        assert trace.attempted_queries == 3
+        assert trace.successful_queries == 2
+        assert trace.failed_queries == 1
