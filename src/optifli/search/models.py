@@ -103,12 +103,13 @@ class LegSearchTrace(BaseModel, frozen=True):
 
     @model_validator(mode="after")
     def _validate_outcome_flags(self) -> Self:
-        if (
-            self.base_window_hit
-            and self.final_status is not SearchOutcome.RESULTS_FOUND
-        ):
-            msg = "'base_window_hit' requires final_status=RESULTS_FOUND"
-            raise ValueError(msg)
+        if self.base_window_hit:
+            if self.final_status is not SearchOutcome.RESULTS_FOUND:
+                msg = "'base_window_hit' requires final_status=RESULTS_FOUND"
+                raise ValueError(msg)
+            if self.expansion_rounds > 0:
+                msg = "'base_window_hit' requires 'expansion_rounds'=0"
+                raise ValueError(msg)
         if self.fallback_exhausted:
             if not self.fallback_used:
                 msg = "'fallback_exhausted' requires 'fallback_used'=True"
