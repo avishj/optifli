@@ -4,6 +4,7 @@
 
 """Search-domain models and execution helpers."""
 
+from optifli.search.fli_queries import build_search_filters
 from optifli.search.models import (
     ApiFailureClassification,
     CandidateSearchResult,
@@ -30,6 +31,7 @@ __all__: list[str] = [
     "SearchOutcome",
     "StopMode",
     "build_local_query_slices",
+    "build_search_filters",
     "group_airports_by_timezone",
     "split_window_by_local_date",
 ]
