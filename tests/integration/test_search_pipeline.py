@@ -51,14 +51,14 @@ _MISS = SearchResponse(options=(), failure=None)
 def _always_hit_adapter(call_count: int) -> FliAdapter:
     mock_client = MagicMock()
     adapter = FliAdapter(client=mock_client)
-    adapter.search = MagicMock(side_effect=[_HIT] * call_count)  # type: ignore[method-assign]  # ty: ignore[invalid-assignment]
+    adapter.search = MagicMock(side_effect=lambda *args, **kwargs: _HIT)  # type: ignore[method-assign]
     return adapter
 
 
 def _always_miss_adapter(call_count: int) -> FliAdapter:
     mock_client = MagicMock()
     adapter = FliAdapter(client=mock_client)
-    adapter.search = MagicMock(side_effect=[_MISS] * call_count)  # type: ignore[method-assign]  # ty: ignore[invalid-assignment]
+    adapter.search = MagicMock(side_effect=lambda *args, **kwargs: _MISS)  # type: ignore[method-assign]
     return adapter
 
 
