@@ -97,7 +97,7 @@ class TestSearchLegBaseWindow:
         resp = SearchResponse(options=(_option(),), failure=None)
         adapter = _adapter_returning(resp)
 
-        options, trace = search_leg(_leg(), adapter)
+        options, trace, _failure = search_leg(_leg(), adapter)
 
         assert len(options) == 1
         assert trace.final_status is SearchOutcome.RESULTS_FOUND
@@ -107,7 +107,7 @@ class TestSearchLegBaseWindow:
         resp = SearchResponse(options=(), failure=None)
         adapter = _adapter_returning(resp)
 
-        options, trace = search_leg(_leg(), adapter)
+        options, trace, _failure = search_leg(_leg(), adapter)
 
         assert len(options) == 0
         assert trace.final_status is SearchOutcome.NO_RESULTS_BASE_WINDOW
@@ -120,7 +120,7 @@ class TestSearchLegBaseWindow:
         )
         adapter = _adapter_returning(resp)
 
-        _options, trace = search_leg(_leg(), adapter)
+        _options, trace, _failure = search_leg(_leg(), adapter)
 
         assert trace.failed_queries == 1
         assert trace.successful_queries == 0
@@ -132,7 +132,7 @@ class TestSearchLegBaseWindow:
         adapter = _adapter_returning(resp1, resp2)
 
         # LHR (UTC+1 in Jul) cross-day window → 2 slices → 2 calls
-        options, trace = search_leg(
+        options, trace, _failure = search_leg(
             _leg(
                 origin_airports=["LHR"],
                 dest_airports=["JFK"],
@@ -152,7 +152,7 @@ class TestSearchLegBaseWindow:
         resp = SearchResponse(options=(), failure=None)
         adapter = _adapter_returning(resp)
 
-        _options, trace = search_leg(_leg(start=start, end=end), adapter)
+        _options, trace, _failure = search_leg(_leg(start=start, end=end), adapter)
 
         assert trace.window_start == start
         assert trace.window_end == end
@@ -161,7 +161,7 @@ class TestSearchLegBaseWindow:
         resp = SearchResponse(options=(_option(),), failure=None)
         adapter = _adapter_returning(resp)
 
-        _options, trace = search_leg(_leg(), adapter)
+        _options, trace, _failure = search_leg(_leg(), adapter)
 
         assert trace.fallback_used is False
         assert trace.fallback_exhausted is False
@@ -189,7 +189,7 @@ class TestSearchLegExpansion:
         resp_hit = SearchResponse(options=(_option(),), failure=None)
         adapter = _adapter_returning(_EMPTY, resp_hit, _EMPTY)
 
-        options, trace = search_leg(
+        options, trace, _failure = search_leg(
             _leg(),
             adapter,
             max_expansion_rounds=2,
@@ -213,7 +213,7 @@ class TestSearchLegExpansion:
             _EMPTY,
         )
 
-        _options, trace = search_leg(
+        _options, trace, _failure = search_leg(
             _leg(),
             adapter,
             max_expansion_rounds=2,
@@ -228,7 +228,7 @@ class TestSearchLegExpansion:
         # Base: 1 miss. Round 1: 2 misses. Cap=1 so no round 2.
         adapter = _adapter_returning(_EMPTY, _EMPTY, _EMPTY)
 
-        options, trace = search_leg(
+        options, trace, _failure = search_leg(
             _leg(),
             adapter,
             max_expansion_rounds=1,
@@ -241,7 +241,7 @@ class TestSearchLegExpansion:
     def test_zero_cap_skips_expansion(self):
         adapter = _adapter_returning(_EMPTY)
 
-        _options, trace = search_leg(
+        _options, trace, _failure = search_leg(
             _leg(),
             adapter,
             max_expansion_rounds=0,
@@ -259,7 +259,7 @@ class TestSearchLegExpansion:
         hit_resp = SearchResponse(options=(_option(),), failure=None)
         adapter = _adapter_returning(_EMPTY, fail_resp, hit_resp)
 
-        _options, trace = search_leg(
+        _options, trace, _failure = search_leg(
             _leg(),
             adapter,
             max_expansion_rounds=2,
@@ -291,7 +291,7 @@ class TestSearchLegFallback:
         resp_hit = SearchResponse(options=(_option(),), failure=None)
         adapter = _adapter_returning(_EMPTY, resp_hit)
 
-        options, trace = search_leg(_leg(), adapter, fallback=_FALLBACK)
+        options, trace, _failure = search_leg(_leg(), adapter, fallback=_FALLBACK)
 
         assert len(options) == 1
         assert trace.final_status is SearchOutcome.RESULTS_FOUND
@@ -302,7 +302,7 @@ class TestSearchLegFallback:
         # Nonstop miss (1), fallback miss (1).
         adapter = _adapter_returning(_EMPTY, _EMPTY)
 
-        options, trace = search_leg(_leg(), adapter, fallback=_FALLBACK)
+        options, trace, _failure = search_leg(_leg(), adapter, fallback=_FALLBACK)
 
         assert len(options) == 0
         assert trace.final_status is SearchOutcome.NO_RESULTS_AFTER_FALLBACK
@@ -312,7 +312,7 @@ class TestSearchLegFallback:
     def test_disabled_skips_fallback(self):
         adapter = _adapter_returning(_EMPTY)
 
-        _options, trace = search_leg(
+        _options, trace, _failure = search_leg(
             _leg(),
             adapter,
             fallback=FallbackBehavior.DISABLED,
@@ -325,7 +325,7 @@ class TestSearchLegFallback:
         resp_hit = SearchResponse(options=(_option(),), failure=None)
         adapter = _adapter_returning(resp_hit)
 
-        _options, trace = search_leg(_leg(), adapter, fallback=_FALLBACK)
+        _options, trace, _failure = search_leg(_leg(), adapter, fallback=_FALLBACK)
 
         assert trace.final_status is SearchOutcome.RESULTS_FOUND
         assert trace.fallback_used is False
@@ -337,7 +337,7 @@ class TestSearchLegFallback:
         resp_hit = SearchResponse(options=(_option(),), failure=None)
         adapter = _adapter_returning(_EMPTY, _EMPTY, _EMPTY, resp_hit, _EMPTY)
 
-        options, trace = search_leg(
+        options, trace, _failure = search_leg(
             _leg(),
             adapter,
             max_expansion_rounds=1,
@@ -366,7 +366,7 @@ class TestSearchLegFallback:
             _EMPTY,
         )
 
-        options, trace = search_leg(
+        options, trace, _failure = search_leg(
             _leg(),
             adapter,
             fallback=_FALLBACK,
@@ -392,7 +392,7 @@ class TestSearchLegFallback:
             _EMPTY,
         )
 
-        _options, trace = search_leg(
+        _options, trace, _failure = search_leg(
             _leg(),
             adapter,
             fallback=_FALLBACK,
@@ -412,7 +412,7 @@ class TestSearchLegFallback:
         )
         adapter = _adapter_returning(_EMPTY, fail_resp)
 
-        _options, trace = search_leg(_leg(), adapter, fallback=_FALLBACK)
+        _options, trace, _failure = search_leg(_leg(), adapter, fallback=_FALLBACK)
 
         assert trace.attempted_queries == 2
         assert trace.successful_queries == 1
