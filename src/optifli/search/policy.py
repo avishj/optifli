@@ -14,6 +14,7 @@ from optifli.search.fli_adapter import FliAdapter, LegOption, SearchResponse
 from optifli.search.fli_queries import build_search_filters
 from optifli.search.models import (
     ApiFailureClassification,
+    FallbackBehavior,
     LegSearchTrace,
     SearchOutcome,
     StopMode,
@@ -85,29 +86,30 @@ def _build_expanded_leg(leg: Leg, rounds: int) -> Leg:
     )
 
 
-def search_leg(
+@dataclass
+class _NonstopResult:
+    """Outcome of the nonstop search phase (base + expansion)."""
+
+    base_hit: bool
+    expansion_rounds: int
+    searched_window: DepartureWindow
+
+
+def _run_nonstop_phase(
     leg: Leg,
     adapter: FliAdapter,
+    acc: _SearchAccumulator,
     *,
-    max_expansion_rounds: int = 0,
-) -> tuple[list[LegOption], LegSearchTrace]:
-    """Execute non-stop search with optional expansion for a single leg.
-
-    Returns the collected options and a trace of the execution.
-    """
-    acc = _SearchAccumulator()
-    base_hit = False
-    expansion_rounds_used = 0
+    max_expansion_rounds: int,
+) -> _NonstopResult:
+    """Execute base window search and optional expansion rounds."""
     searched_window = leg.departure_window
+    expansion_rounds_used = 0
 
-    # --- base window ---
     slices = build_local_query_slices(leg)
     _run_slices(slices, StopMode.NON_STOP, adapter, acc)
 
-    if acc.has_results:
-        base_hit = True
-    else:
-        # --- expansion rounds ---
+    if not acc.has_results:
         for round_num in range(1, max_expansion_rounds + 1):
             expanded_leg = _build_expanded_leg(leg, round_num)
             searched_window = expanded_leg.departure_window
@@ -119,42 +121,128 @@ def search_leg(
             if acc.has_results:
                 break
 
-    status = _resolve_nonstop_outcome(
+    return _NonstopResult(
+        base_hit=acc.has_results and expansion_rounds_used == 0,
+        expansion_rounds=expansion_rounds_used,
+        searched_window=searched_window,
+    )
+
+
+def _run_fallback_phase(  # noqa: PLR0913
+    leg: Leg,
+    adapter: FliAdapter,
+    acc: _SearchAccumulator,
+    *,
+    searched_window: DepartureWindow,
+    expand: bool,
+    max_expansion_rounds: int,
+) -> DepartureWindow:
+    """Execute one-stop fallback search, returning the final searched window."""
+    fallback_leg = Leg(
+        origin=leg.origin,
+        destination=leg.destination,
+        departure_window=searched_window,
+        arrival_cutoff=leg.arrival_cutoff,
+    )
+
+    slices = build_local_query_slices(fallback_leg)
+    _run_slices(slices, StopMode.ONE_STOP, adapter, acc)
+
+    if acc.has_results or not expand:
+        return searched_window
+
+    for round_num in range(1, max_expansion_rounds + 1):
+        expanded_leg = _build_expanded_leg(leg, round_num)
+        searched_window = expanded_leg.departure_window
+
+        slices = build_local_query_slices(expanded_leg)
+        _run_slices(slices, StopMode.ONE_STOP, adapter, acc)
+
+        if acc.has_results:
+            break
+
+    return searched_window
+
+
+def search_leg(
+    leg: Leg,
+    adapter: FliAdapter,
+    *,
+    max_expansion_rounds: int = 0,
+    fallback: FallbackBehavior = FallbackBehavior.DISABLED,
+    expand_on_fallback: bool = False,
+) -> tuple[list[LegOption], LegSearchTrace]:
+    """Execute search policy for a single leg.
+
+    Returns the collected options and a trace of the execution.
+    """
+    acc = _SearchAccumulator()
+
+    nonstop = _run_nonstop_phase(
+        leg,
+        adapter,
+        acc,
+        max_expansion_rounds=max_expansion_rounds,
+    )
+    searched_window = nonstop.searched_window
+    fallback_used = False
+    fallback_exhausted = False
+
+    if not acc.has_results and fallback is FallbackBehavior.ONE_STOP:
+        fallback_used = True
+        searched_window = _run_fallback_phase(
+            leg,
+            adapter,
+            acc,
+            searched_window=nonstop.searched_window,
+            expand=expand_on_fallback,
+            max_expansion_rounds=max_expansion_rounds,
+        )
+        fallback_exhausted = not acc.has_results
+
+    status = _resolve_outcome(
         has_results=acc.has_results,
-        expanded=expansion_rounds_used > 0,
+        expanded=nonstop.expansion_rounds > 0,
+        fallback_used=fallback_used,
     )
 
     trace = LegSearchTrace(
         attempted_queries=acc.attempted,
         successful_queries=acc.successful,
         failed_queries=acc.failed,
-        base_window_hit=base_hit,
-        expansion_rounds=expansion_rounds_used,
+        base_window_hit=nonstop.base_hit,
+        expansion_rounds=nonstop.expansion_rounds,
+        fallback_used=fallback_used,
+        fallback_exhausted=fallback_exhausted,
         final_status=status,
         window_start=searched_window.start,
         window_end=searched_window.end,
     )
 
     logger.debug(
-        "Leg %s->%s search: %s (%d option(s), %d expansion round(s))",
+        "Leg %s->%s search: %s (%d option(s), %d expansion round(s), fallback=%s)",
         "/".join(leg.origin.airports),
         "/".join(leg.destination.airports),
         status.value,
         len(acc.options),
-        expansion_rounds_used,
+        nonstop.expansion_rounds,
+        fallback_used,
     )
 
     return acc.options, trace
 
 
-def _resolve_nonstop_outcome(
+def _resolve_outcome(
     *,
     has_results: bool,
     expanded: bool,
+    fallback_used: bool,
 ) -> SearchOutcome:
-    """Determine the search outcome after non-stop phases."""
+    """Determine the final search outcome."""
     if has_results:
         return SearchOutcome.RESULTS_FOUND
+    if fallback_used:
+        return SearchOutcome.NO_RESULTS_AFTER_FALLBACK
     if expanded:
         return SearchOutcome.NO_RESULTS_AFTER_EXPANSION
     return SearchOutcome.NO_RESULTS_BASE_WINDOW
