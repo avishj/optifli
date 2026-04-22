@@ -6,8 +6,10 @@
 
 import logging
 from dataclasses import dataclass, field
+from datetime import timedelta
 
 from optifli.models.itinerary import Leg
+from optifli.models.window import DepartureWindow
 from optifli.search.fli_adapter import FliAdapter, LegOption, SearchResponse
 from optifli.search.fli_queries import build_search_filters
 from optifli.search.models import (
@@ -19,6 +21,8 @@ from optifli.search.models import (
 from optifli.search.windows import LocalQuerySlice, build_local_query_slices
 
 logger = logging.getLogger(__name__)
+
+_EXPANSION_STEP = timedelta(hours=1)
 
 
 @dataclass
@@ -59,40 +63,98 @@ def _run_slices(
         acc.record(response)
 
 
+def _expand_window(
+    window: DepartureWindow,
+    rounds: int,
+) -> DepartureWindow:
+    """Symmetrically widen a departure window by *rounds* expansion steps."""
+    delta = _EXPANSION_STEP * rounds
+    return DepartureWindow(
+        start=window.start - delta,
+        end=window.end + delta,
+    )
+
+
+def _build_expanded_leg(leg: Leg, rounds: int) -> Leg:
+    """Return a copy of *leg* with a symmetrically expanded window."""
+    return Leg(
+        origin=leg.origin,
+        destination=leg.destination,
+        departure_window=_expand_window(leg.departure_window, rounds),
+        arrival_cutoff=leg.arrival_cutoff,
+    )
+
+
 def search_leg(
     leg: Leg,
     adapter: FliAdapter,
+    *,
+    max_expansion_rounds: int = 0,
 ) -> tuple[list[LegOption], LegSearchTrace]:
-    """Execute base-window non-stop search for a single leg.
+    """Execute non-stop search with optional expansion for a single leg.
 
     Returns the collected options and a trace of the execution.
     """
-    slices = build_local_query_slices(leg)
     acc = _SearchAccumulator()
+    base_hit = False
+    expansion_rounds_used = 0
+    searched_window = leg.departure_window
 
+    # --- base window ---
+    slices = build_local_query_slices(leg)
     _run_slices(slices, StopMode.NON_STOP, adapter, acc)
 
     if acc.has_results:
-        status = SearchOutcome.RESULTS_FOUND
+        base_hit = True
     else:
-        status = SearchOutcome.NO_RESULTS_BASE_WINDOW
+        # --- expansion rounds ---
+        for round_num in range(1, max_expansion_rounds + 1):
+            expanded_leg = _build_expanded_leg(leg, round_num)
+            searched_window = expanded_leg.departure_window
+            expansion_rounds_used = round_num
+
+            slices = build_local_query_slices(expanded_leg)
+            _run_slices(slices, StopMode.NON_STOP, adapter, acc)
+
+            if acc.has_results:
+                break
+
+    status = _resolve_nonstop_outcome(
+        has_results=acc.has_results,
+        expanded=expansion_rounds_used > 0,
+    )
 
     trace = LegSearchTrace(
         attempted_queries=acc.attempted,
         successful_queries=acc.successful,
         failed_queries=acc.failed,
-        base_window_hit=acc.has_results,
+        base_window_hit=base_hit,
+        expansion_rounds=expansion_rounds_used,
         final_status=status,
-        window_start=leg.departure_window.start,
-        window_end=leg.departure_window.end,
+        window_start=searched_window.start,
+        window_end=searched_window.end,
     )
 
     logger.debug(
-        "Leg %s→%s base search: %s (%d option(s))",
+        "Leg %s->%s search: %s (%d option(s), %d expansion round(s))",
         "/".join(leg.origin.airports),
         "/".join(leg.destination.airports),
         status.value,
         len(acc.options),
+        expansion_rounds_used,
     )
 
     return acc.options, trace
+
+
+def _resolve_nonstop_outcome(
+    *,
+    has_results: bool,
+    expanded: bool,
+) -> SearchOutcome:
+    """Determine the search outcome after non-stop phases."""
+    if has_results:
+        return SearchOutcome.RESULTS_FOUND
+    if expanded:
+        return SearchOutcome.NO_RESULTS_AFTER_EXPANSION
+    return SearchOutcome.NO_RESULTS_BASE_WINDOW
