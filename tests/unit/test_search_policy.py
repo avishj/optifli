@@ -22,6 +22,7 @@ from optifli.search.models import (
     ApiFailureClassification,
     FallbackBehavior,
     SearchOutcome,
+    SearchPolicy,
 )
 from optifli.search.policy import search_leg
 
@@ -192,7 +193,7 @@ class TestSearchLegExpansion:
         options, trace, _failure = search_leg(
             _leg(),
             adapter,
-            max_expansion_rounds=2,
+            policy=SearchPolicy(max_expansion_rounds=2),
         )
 
         assert trace.expansion_rounds == 1
@@ -216,7 +217,7 @@ class TestSearchLegExpansion:
         _options, trace, _failure = search_leg(
             _leg(),
             adapter,
-            max_expansion_rounds=2,
+            policy=SearchPolicy(max_expansion_rounds=2),
         )
 
         assert trace.expansion_rounds == 2
@@ -231,7 +232,7 @@ class TestSearchLegExpansion:
         options, trace, _failure = search_leg(
             _leg(),
             adapter,
-            max_expansion_rounds=1,
+            policy=SearchPolicy(max_expansion_rounds=1),
         )
 
         assert trace.expansion_rounds == 1
@@ -244,7 +245,7 @@ class TestSearchLegExpansion:
         _options, trace, _failure = search_leg(
             _leg(),
             adapter,
-            max_expansion_rounds=0,
+            policy=SearchPolicy(max_expansion_rounds=0),
         )
 
         assert trace.expansion_rounds == 0
@@ -262,7 +263,7 @@ class TestSearchLegExpansion:
         _options, trace, _failure = search_leg(
             _leg(),
             adapter,
-            max_expansion_rounds=2,
+            policy=SearchPolicy(max_expansion_rounds=2),
         )
 
         assert trace.attempted_queries == 3
@@ -291,7 +292,9 @@ class TestSearchLegFallback:
         resp_hit = SearchResponse(options=(_option(),), failure=None)
         adapter = _adapter_returning(_EMPTY, resp_hit)
 
-        options, trace, _failure = search_leg(_leg(), adapter, fallback=_FALLBACK)
+        options, trace, _failure = search_leg(
+            _leg(), adapter, policy=SearchPolicy(fallback=_FALLBACK)
+        )
 
         assert len(options) == 1
         assert trace.final_status is SearchOutcome.RESULTS_FOUND
@@ -302,7 +305,9 @@ class TestSearchLegFallback:
         # Nonstop miss (1), fallback miss (1).
         adapter = _adapter_returning(_EMPTY, _EMPTY)
 
-        options, trace, _failure = search_leg(_leg(), adapter, fallback=_FALLBACK)
+        options, trace, _failure = search_leg(
+            _leg(), adapter, policy=SearchPolicy(fallback=_FALLBACK)
+        )
 
         assert len(options) == 0
         assert trace.final_status is SearchOutcome.NO_RESULTS_AFTER_FALLBACK
@@ -315,7 +320,7 @@ class TestSearchLegFallback:
         _options, trace, _failure = search_leg(
             _leg(),
             adapter,
-            fallback=FallbackBehavior.DISABLED,
+            policy=SearchPolicy(fallback=FallbackBehavior.DISABLED),
         )
 
         assert trace.final_status is SearchOutcome.NO_RESULTS_BASE_WINDOW
@@ -325,7 +330,9 @@ class TestSearchLegFallback:
         resp_hit = SearchResponse(options=(_option(),), failure=None)
         adapter = _adapter_returning(resp_hit)
 
-        _options, trace, _failure = search_leg(_leg(), adapter, fallback=_FALLBACK)
+        _options, trace, _failure = search_leg(
+            _leg(), adapter, policy=SearchPolicy(fallback=_FALLBACK)
+        )
 
         assert trace.final_status is SearchOutcome.RESULTS_FOUND
         assert trace.fallback_used is False
@@ -340,8 +347,7 @@ class TestSearchLegFallback:
         options, trace, _failure = search_leg(
             _leg(),
             adapter,
-            max_expansion_rounds=1,
-            fallback=_FALLBACK,
+            policy=SearchPolicy(max_expansion_rounds=1, fallback=_FALLBACK),
         )
 
         assert len(options) == 1
@@ -369,9 +375,9 @@ class TestSearchLegFallback:
         options, trace, _failure = search_leg(
             _leg(),
             adapter,
-            fallback=_FALLBACK,
-            expand_on_fallback=True,
-            max_expansion_rounds=1,
+            policy=SearchPolicy(
+                fallback=_FALLBACK, expand_on_fallback=True, max_expansion_rounds=1
+            ),
         )
 
         assert len(options) == 1
@@ -395,9 +401,9 @@ class TestSearchLegFallback:
         _options, trace, _failure = search_leg(
             _leg(),
             adapter,
-            fallback=_FALLBACK,
-            expand_on_fallback=True,
-            max_expansion_rounds=1,
+            policy=SearchPolicy(
+                fallback=_FALLBACK, expand_on_fallback=True, max_expansion_rounds=1
+            ),
         )
 
         assert trace.fallback_used is True
@@ -412,7 +418,9 @@ class TestSearchLegFallback:
         )
         adapter = _adapter_returning(_EMPTY, fail_resp)
 
-        _options, trace, _failure = search_leg(_leg(), adapter, fallback=_FALLBACK)
+        _options, trace, _failure = search_leg(
+            _leg(), adapter, policy=SearchPolicy(fallback=_FALLBACK)
+        )
 
         assert trace.attempted_queries == 2
         assert trace.successful_queries == 1

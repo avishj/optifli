@@ -17,6 +17,7 @@ from optifli.search.models import (
     FallbackBehavior,
     LegSearchTrace,
     SearchOutcome,
+    SearchPolicy,
     StopMode,
 )
 from optifli.search.windows import LocalQuerySlice, build_local_query_slices
@@ -51,14 +52,21 @@ class _SearchAccumulator:
             self.options.extend(response.options)
 
 
-def _run_slices(
+def _run_slices(  # noqa: PLR0913
     slices: list[LocalQuerySlice],
     stop_mode: StopMode,
     adapter: FliAdapter,
     acc: _SearchAccumulator,
+    policy: SearchPolicy,
+    used_requests: int,
 ) -> None:
     """Search all slices for a given stop mode, updating *acc* in place."""
     for query_slice in slices:
+        if (
+            policy.max_requests is not None
+            and acc.attempted + used_requests >= policy.max_requests
+        ):
+            break
         filters = build_search_filters(query_slice, stop_mode)
         response = adapter.search(filters)
         acc.record(response)
@@ -99,24 +107,29 @@ def _run_nonstop_phase(
     leg: Leg,
     adapter: FliAdapter,
     acc: _SearchAccumulator,
-    *,
-    max_expansion_rounds: int,
+    policy: SearchPolicy,
+    used_requests: int,
 ) -> _NonstopResult:
     """Execute base window search and optional expansion rounds."""
     searched_window = leg.departure_window
     expansion_rounds_used = 0
 
     slices = build_local_query_slices(leg)
-    _run_slices(slices, StopMode.NON_STOP, adapter, acc)
+    _run_slices(slices, StopMode.NON_STOP, adapter, acc, policy, used_requests)
 
     if not acc.has_results:
-        for round_num in range(1, max_expansion_rounds + 1):
+        for round_num in range(1, policy.max_expansion_rounds + 1):
+            if (
+                policy.max_requests is not None
+                and acc.attempted + used_requests >= policy.max_requests
+            ):
+                break
             expanded_leg = _build_expanded_leg(leg, round_num)
             searched_window = expanded_leg.departure_window
             expansion_rounds_used = round_num
 
             slices = build_local_query_slices(expanded_leg)
-            _run_slices(slices, StopMode.NON_STOP, adapter, acc)
+            _run_slices(slices, StopMode.NON_STOP, adapter, acc, policy, used_requests)
 
             if acc.has_results:
                 break
@@ -134,8 +147,8 @@ def _run_fallback_phase(  # noqa: PLR0913
     acc: _SearchAccumulator,
     *,
     searched_window: DepartureWindow,
-    expand: bool,
-    max_expansion_rounds: int,
+    policy: SearchPolicy,
+    used_requests: int,
 ) -> DepartureWindow:
     """Execute one-stop fallback search, returning the final searched window."""
     fallback_leg = Leg(
@@ -146,17 +159,22 @@ def _run_fallback_phase(  # noqa: PLR0913
     )
 
     slices = build_local_query_slices(fallback_leg)
-    _run_slices(slices, StopMode.ONE_STOP, adapter, acc)
+    _run_slices(slices, StopMode.ONE_STOP, adapter, acc, policy, used_requests)
 
-    if acc.has_results or not expand:
+    if acc.has_results or not policy.expand_on_fallback:
         return searched_window
 
-    for round_num in range(1, max_expansion_rounds + 1):
+    for round_num in range(1, policy.max_expansion_rounds + 1):
+        if (
+            policy.max_requests is not None
+            and acc.attempted + used_requests >= policy.max_requests
+        ):
+            break
         expanded_leg = _build_expanded_leg(leg, round_num)
         searched_window = expanded_leg.departure_window
 
         slices = build_local_query_slices(expanded_leg)
-        _run_slices(slices, StopMode.ONE_STOP, adapter, acc)
+        _run_slices(slices, StopMode.ONE_STOP, adapter, acc, policy, used_requests)
 
         if acc.has_results:
             break
@@ -167,36 +185,38 @@ def _run_fallback_phase(  # noqa: PLR0913
 def search_leg(
     leg: Leg,
     adapter: FliAdapter,
-    *,
-    max_expansion_rounds: int = 0,
-    fallback: FallbackBehavior = FallbackBehavior.DISABLED,
-    expand_on_fallback: bool = False,
+    policy: SearchPolicy | None = None,
+    used_requests: int = 0,
 ) -> tuple[list[LegOption], LegSearchTrace, ApiFailureClassification | None]:
     """Execute search policy for a single leg.
 
     Returns the collected options, a trace, and the last failure classification.
     """
+    if policy is None:
+        policy = SearchPolicy()
+
     acc = _SearchAccumulator()
 
     nonstop = _run_nonstop_phase(
         leg,
         adapter,
         acc,
-        max_expansion_rounds=max_expansion_rounds,
+        policy,
+        used_requests,
     )
     searched_window = nonstop.searched_window
     fallback_used = False
     fallback_exhausted = False
 
-    if not acc.has_results and fallback is FallbackBehavior.ONE_STOP:
+    if not acc.has_results and policy.fallback is FallbackBehavior.ONE_STOP:
         fallback_used = True
         searched_window = _run_fallback_phase(
             leg,
             adapter,
             acc,
             searched_window=nonstop.searched_window,
-            expand=expand_on_fallback,
-            max_expansion_rounds=max_expansion_rounds,
+            policy=policy,
+            used_requests=used_requests,
         )
         fallback_exhausted = not acc.has_results
 

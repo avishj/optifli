@@ -15,6 +15,7 @@ from optifli.search import (
     FallbackBehavior,
     FliAdapter,
     LegOption,
+    SearchPolicy,
     SearchResponse,
     SegmentDetail,
     search_candidate,
@@ -111,7 +112,7 @@ class TestSearchPipeline:
         _all_opts, result = search_candidate(
             forward_candidate,
             adapter,
-            max_requests=1,
+            policy=SearchPolicy(max_requests=1),
         )
 
         assert result.completed is False
@@ -144,7 +145,7 @@ class TestSearchPipelineBenchmark:
         _, result = search_candidate(
             candidate,
             adapter,
-            fallback=FallbackBehavior.ONE_STOP,
+            policy=SearchPolicy(fallback=FallbackBehavior.ONE_STOP),
         )
 
         assert result.completed is True

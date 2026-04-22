@@ -24,6 +24,7 @@ from optifli.search.models import (
     ApiFailureClassification,
     FallbackBehavior,
     SearchOutcome,
+    SearchPolicy,
 )
 
 pytestmark = pytest.mark.unit
@@ -214,8 +215,10 @@ class TestMultiLeg:
         _all_opts, result = search_candidate(
             self._two_leg_candidate(),
             adapter,
-            max_expansion_rounds=1,
-            fallback=FallbackBehavior.ONE_STOP,
+            policy=SearchPolicy(
+                max_expansion_rounds=1,
+                fallback=FallbackBehavior.ONE_STOP,
+            ),
         )
 
         assert result.legs[0].trace.fallback_used is True
@@ -255,7 +258,7 @@ class TestPartialResults:
         all_opts, result = search_candidate(
             self._three_leg_candidate(),
             adapter,
-            max_requests=1,
+            policy=SearchPolicy(max_requests=1),
         )
 
         assert len(all_opts) == 1
@@ -273,7 +276,7 @@ class TestPartialResults:
         _all_opts, result = search_candidate(
             self._three_leg_candidate(),
             adapter,
-            max_requests=100,
+            policy=SearchPolicy(max_requests=100),
         )
 
         assert result.completed is True
@@ -305,7 +308,7 @@ class TestPartialResults:
         all_opts, result = search_candidate(
             self._three_leg_candidate(),
             adapter,
-            max_requests=1,
+            policy=SearchPolicy(max_requests=1),
         )
 
         assert len(all_opts) == 1
@@ -322,7 +325,7 @@ class TestPartialResults:
         all_opts, result = search_candidate(
             self._three_leg_candidate(),
             adapter,
-            max_requests=3,
+            policy=SearchPolicy(max_requests=3),
         )
 
         assert len(all_opts) == 2

@@ -10,55 +10,61 @@ from optifli.engine.candidates import RouteCandidate
 from optifli.search.fli_adapter import FliAdapter, LegOption
 from optifli.search.models import (
     CandidateSearchResult,
-    FallbackBehavior,
     LegSearchResult,
+    SearchPolicy,
 )
 from optifli.search.policy import search_leg
 
 logger = logging.getLogger(__name__)
 
 
-def search_candidate(  # noqa: PLR0913
+def search_candidate(
     candidate: RouteCandidate,
     adapter: FliAdapter,
-    *,
-    max_expansion_rounds: int = 0,
-    fallback: FallbackBehavior = FallbackBehavior.DISABLED,
-    expand_on_fallback: bool = False,
-    max_requests: int | None = None,
+    policy: SearchPolicy | None = None,
 ) -> tuple[list[list[LegOption]], CandidateSearchResult]:
     """Search every leg in a route candidate.
 
     Returns per-leg option lists and a ``CandidateSearchResult`` with traces.
     Stops early when *max_requests* is exhausted, preserving partial results.
     """
+    if policy is None:
+        policy = SearchPolicy()
+
     all_options: list[list[LegOption]] = []
     leg_results: list[LegSearchResult] = []
     requests_used = 0
     budget_exhausted = False
 
     for leg in candidate.legs:
-        if max_requests is not None and requests_used >= max_requests:
+        if policy.max_requests is not None and requests_used >= policy.max_requests:
             budget_exhausted = True
             logger.warning(
                 "Request budget exhausted (%d/%d) - skipping remaining legs",
                 requests_used,
-                max_requests,
+                policy.max_requests,
             )
             break
 
         options, trace, failure = search_leg(
             leg,
             adapter,
-            max_expansion_rounds=max_expansion_rounds,
-            fallback=fallback,
-            expand_on_fallback=expand_on_fallback,
+            policy,
+            used_requests=requests_used,
         )
         requests_used += trace.attempted_queries
         all_options.append(options)
         leg_results.append(
             LegSearchResult(leg=leg, trace=trace, api_failure=failure),
         )
+
+        if policy.max_requests is not None and requests_used >= policy.max_requests:
+            budget_exhausted = True
+            logger.warning(
+                "Request budget exhausted (%d/%d)",
+                requests_used,
+                policy.max_requests,
+            )
 
     completed = len(leg_results) == len(candidate.legs) and not budget_exhausted
     result = CandidateSearchResult(
