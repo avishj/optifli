@@ -47,6 +47,9 @@ def _build_time_restrictions(query_slice: LocalQuerySlice) -> TimeRestrictions |
     if is_full_day:
         return None
 
+    # The FLI API only accepts whole hours for time restrictions.
+    # We aggressively widen partial-hour slices using floor/ceil to guarantee
+    # we do not accidentally filter out flights near the boundaries.
     earliest = floor(earliest_hour)
     # Ceil and clamp to 24; end==midnight of next day means "up to 24".
     latest = ceil(end_hour) if end_hour > 0 else _MAX_DEPARTURE_HOUR
