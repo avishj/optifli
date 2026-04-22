@@ -4,6 +4,15 @@
 
 """Search-domain models and execution helpers."""
 
+from optifli.search.fli_adapter import (
+    FliAdapter,
+    LegOption,
+    SearchResponse,
+    SegmentDetail,
+    classify_error,
+    normalize_leg,
+    normalize_result,
+)
 from optifli.search.fli_client import FliClient
 from optifli.search.fli_queries import build_search_filters
 from optifli.search.models import (
@@ -26,14 +35,21 @@ __all__: list[str] = [
     "ApiFailureClassification",
     "CandidateSearchResult",
     "FallbackBehavior",
+    "FliAdapter",
     "FliClient",
+    "LegOption",
     "LegSearchResult",
     "LegSearchTrace",
     "LocalQuerySlice",
     "SearchOutcome",
+    "SearchResponse",
+    "SegmentDetail",
     "StopMode",
     "build_local_query_slices",
     "build_search_filters",
+    "classify_error",
     "group_airports_by_timezone",
+    "normalize_leg",
+    "normalize_result",
     "split_window_by_local_date",
 ]
