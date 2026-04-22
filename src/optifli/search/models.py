@@ -15,6 +15,7 @@ from pydantic import (
     computed_field,
     model_validator,
 )
+from pydantic.alias_generators import to_camel
 
 from optifli.engine.candidates import RouteCandidate
 from optifli.models.itinerary import Leg
@@ -58,10 +59,25 @@ class ApiFailureClassification(StrEnum):
     UNKNOWN = "unknown"
 
 
+class SearchPolicy(BaseModel, frozen=True):
+    """Encapsulates all search constraints and budgets."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    max_expansion_rounds: NonNegativeInt = 0
+    fallback: FallbackBehavior = FallbackBehavior.DISABLED
+    expand_on_fallback: bool = False
+    max_requests: int | None = None
+
+
 class LegSearchTrace(BaseModel, frozen=True):
     """Trace fields for one leg search policy execution."""
 
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(
+        extra="forbid",
+        populate_by_name=True,
+        alias_generator=to_camel,
+    )
 
     attempted_queries: NonNegativeInt = 0
     successful_queries: NonNegativeInt = 0
@@ -76,16 +92,11 @@ class LegSearchTrace(BaseModel, frozen=True):
 
     @model_validator(mode="after")
     def _validate_counts(self) -> Self:
-        if self.successful_queries > self.attempted_queries:
-            msg = "'successful_queries' cannot exceed 'attempted_queries'"
-            raise ValueError(msg)
-        if self.failed_queries > self.attempted_queries:
-            msg = "'failed_queries' cannot exceed 'attempted_queries'"
-            raise ValueError(msg)
-        if self.successful_queries + self.failed_queries > self.attempted_queries:
+        if self.successful_queries + self.failed_queries != self.attempted_queries:
             msg = (
-                "'successful_queries' + 'failed_queries' cannot exceed "
-                "'attempted_queries'"
+                f"'successful_queries' ({self.successful_queries}) + "
+                f"'failed_queries' ({self.failed_queries}) must equal "
+                f"'attempted_queries' ({self.attempted_queries})"
             )
             raise ValueError(msg)
         return self

@@ -23,6 +23,7 @@ from optifli.search.models import (
     LegSearchResult,
     LegSearchTrace,
     SearchOutcome,
+    SearchPolicy,
     StopMode,
 )
 from optifli.search.policy import search_leg
@@ -44,6 +45,7 @@ __all__: list[str] = [
     "LegSearchTrace",
     "LocalQuerySlice",
     "SearchOutcome",
+    "SearchPolicy",
     "SearchResponse",
     "SegmentDetail",
     "StopMode",
