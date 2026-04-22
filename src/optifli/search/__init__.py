@@ -4,6 +4,7 @@
 
 """Search-domain models and execution helpers."""
 
+from optifli.search.fli_client import FliClient
 from optifli.search.fli_queries import build_search_filters
 from optifli.search.models import (
     ApiFailureClassification,
@@ -25,6 +26,7 @@ __all__: list[str] = [
     "ApiFailureClassification",
     "CandidateSearchResult",
     "FallbackBehavior",
+    "FliClient",
     "LegSearchResult",
     "LegSearchTrace",
     "LocalQuerySlice",
