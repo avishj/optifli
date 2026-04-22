@@ -14,7 +14,7 @@ from rich.panel import Panel
 from rich.text import Text
 
 from optifli.exit_codes import ExitCode
-from optifli.search import FallbackBehavior, StopMode
+from optifli.search.models import FallbackBehavior, StopMode
 
 
 class LogFormat(StrEnum):
