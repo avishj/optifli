@@ -86,6 +86,7 @@ class LegSearchTrace(BaseModel, frozen=True):
     fallback_used: bool = False
     fallback_exhausted: bool = False
     expansion_rounds: NonNegativeInt = 0
+    fallback_expansion_rounds: NonNegativeInt = 0
     final_status: SearchOutcome
     window_start: datetime
     window_end: datetime
@@ -110,6 +111,9 @@ class LegSearchTrace(BaseModel, frozen=True):
             if self.expansion_rounds > 0:
                 msg = "'base_window_hit' requires 'expansion_rounds'=0"
                 raise ValueError(msg)
+        if self.fallback_expansion_rounds > 0 and not self.fallback_used:
+            msg = "'fallback_expansion_rounds' requires 'fallback_used'=True"
+            raise ValueError(msg)
         if self.fallback_exhausted:
             if not self.fallback_used:
                 msg = "'fallback_exhausted' requires 'fallback_used'=True"

@@ -52,6 +52,23 @@ class _SearchAccumulator:
             self.options.extend(response.options)
 
 
+@dataclass
+class _NonstopResult:
+    """Outcome of the nonstop search phase (base + expansion)."""
+
+    base_hit: bool
+    expansion_rounds: int
+    searched_window: DepartureWindow
+
+
+@dataclass
+class _FallbackResult:
+    """Outcome of the one-stop fallback search phase."""
+
+    searched_window: DepartureWindow
+    expansion_rounds: int
+
+
 def _run_slices(  # noqa: PLR0913
     slices: list[LocalQuerySlice],
     stop_mode: StopMode,
@@ -92,15 +109,6 @@ def _build_expanded_leg(leg: Leg, rounds: int) -> Leg:
         departure_window=_expand_window(leg.departure_window, rounds),
         arrival_cutoff=leg.arrival_cutoff,
     )
-
-
-@dataclass
-class _NonstopResult:
-    """Outcome of the nonstop search phase (base + expansion)."""
-
-    base_hit: bool
-    expansion_rounds: int
-    searched_window: DepartureWindow
 
 
 def _run_nonstop_phase(
@@ -148,9 +156,10 @@ def _run_fallback_phase(
     *,
     policy: SearchPolicy,
     used_requests: int,
-) -> DepartureWindow:
+) -> _FallbackResult:
     """Execute one-stop fallback search, returning the final searched window."""
     searched_window = leg.departure_window
+    expansion_rounds_used = 0
     fallback_leg = Leg(
         origin=leg.origin,
         destination=leg.destination,
@@ -161,25 +170,34 @@ def _run_fallback_phase(
     slices = build_local_query_slices(fallback_leg)
     _run_slices(slices, StopMode.ONE_STOP, adapter, acc, policy, used_requests)
 
-    if acc.has_results or not policy.expand_on_fallback:
-        return searched_window
+    if not acc.has_results and policy.expand_on_fallback:
+        for round_num in range(1, policy.max_expansion_rounds + 1):
+            if (
+                policy.max_requests is not None
+                and acc.attempted + used_requests >= policy.max_requests
+            ):
+                break
+            expanded_leg = _build_expanded_leg(leg, round_num)
+            searched_window = expanded_leg.departure_window
+            expansion_rounds_used = round_num
 
-    for round_num in range(1, policy.max_expansion_rounds + 1):
-        if (
-            policy.max_requests is not None
-            and acc.attempted + used_requests >= policy.max_requests
-        ):
-            break
-        expanded_leg = _build_expanded_leg(leg, round_num)
-        searched_window = expanded_leg.departure_window
+            slices = build_local_query_slices(expanded_leg)
+            _run_slices(
+                slices,
+                StopMode.ONE_STOP,
+                adapter,
+                acc,
+                policy,
+                used_requests,
+            )
 
-        slices = build_local_query_slices(expanded_leg)
-        _run_slices(slices, StopMode.ONE_STOP, adapter, acc, policy, used_requests)
+            if acc.has_results:
+                break
 
-        if acc.has_results:
-            break
-
-    return searched_window
+    return _FallbackResult(
+        searched_window=searched_window,
+        expansion_rounds=expansion_rounds_used,
+    )
 
 
 def search_leg(
@@ -208,15 +226,19 @@ def search_leg(
     fallback_used = False
     fallback_exhausted = False
 
+    fallback_expansion_rounds = 0
+
     if not acc.has_results and policy.fallback is FallbackBehavior.ONE_STOP:
         fallback_used = True
-        searched_window = _run_fallback_phase(
+        fallback = _run_fallback_phase(
             leg,
             adapter,
             acc,
             policy=policy,
             used_requests=used_requests,
         )
+        searched_window = fallback.searched_window
+        fallback_expansion_rounds = fallback.expansion_rounds
         fallback_exhausted = not acc.has_results
 
     status = _resolve_outcome(
@@ -231,6 +253,7 @@ def search_leg(
         failed_queries=acc.failed,
         base_window_hit=nonstop.base_hit,
         expansion_rounds=nonstop.expansion_rounds,
+        fallback_expansion_rounds=fallback_expansion_rounds,
         fallback_used=fallback_used,
         fallback_exhausted=fallback_exhausted,
         final_status=status,
