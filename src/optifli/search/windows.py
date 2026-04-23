@@ -56,7 +56,7 @@ class LocalQuerySlice(BaseModel, frozen=True):
         }:
             msg = "Local slice bounds must align to the declared travel_date"
             raise ValueError(msg)
-        if end.date() != self.travel_date and end.timetz() != time.min:
+        if end.date() != self.travel_date and end.time() != time.min:
             msg = "Cross-day local slices must end exactly at next local midnight"
             raise ValueError(msg)
         return self
