@@ -84,7 +84,7 @@ def _adapter_returning(
 ) -> FliAdapter:
     mock_client = MagicMock()
     adapter = FliAdapter(client=mock_client)
-    adapter.search = MagicMock(side_effect=list(responses))  # type: ignore[method-assign]  # ty: ignore[invalid-assignment]
+    adapter.search = MagicMock(side_effect=list(responses))  # ty: ignore[invalid-assignment]
     return adapter
 
 
