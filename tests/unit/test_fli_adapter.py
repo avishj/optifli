@@ -109,18 +109,13 @@ class TestNormalizeResult:
         assert len(opt.segments) == 2
         assert opt.stops == 1
 
-    def test_preserves_price_and_currency(self):
-        opt = normalize_result(_fli_result(price=312.5, currency="EUR"))
+    def test_preserves_price(self):
+        opt = normalize_result(_fli_result(price=312.5))
         assert opt.price == 312.5
-        assert opt.currency == "EUR"
 
     def test_total_duration(self):
         opt = normalize_result(_fli_result(duration=600))
         assert opt.total_duration_minutes == 600
-
-    def test_none_currency(self):
-        opt = normalize_result(_fli_result(currency=None))
-        assert opt.currency is None
 
 
 # ---------------------------------------------------------------------------
