@@ -195,10 +195,15 @@ class CandidateSearchResult(BaseModel, frozen=True):
             msg = "'completed' results must include every candidate leg"
             raise ValueError(msg)
         for index, leg_result in enumerate(self.legs):
-            if leg_result.leg != expected_legs[index]:
+            expected = expected_legs[index]
+            if leg_result.leg != expected:
+                got_str = (
+                    f"{leg_result.leg.origin.name}->{leg_result.leg.destination.name}"
+                )
+                exp_str = f"{expected.origin.name}->{expected.destination.name}"
                 msg = (
-                    f"Leg search result {index + 1} must match candidate leg "
-                    f"{index + 1}"
+                    f"Leg search result {index + 1} ({got_str}) must match "
+                    f"candidate leg {index + 1} ({exp_str})"
                 )
                 raise ValueError(msg)
         return self
