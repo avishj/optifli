@@ -171,7 +171,7 @@ class CandidateSearchResult(BaseModel, frozen=True):
             msg = "'request_budget_exhausted' requires 'completed'=False"
             raise ValueError(msg)
         expected_legs = self.candidate.legs
-        if not self.legs:
+        if not self.legs and not self.request_budget_exhausted:
             msg = "'legs' must contain at least one leg search result"
             raise ValueError(msg)
         if len(self.legs) > len(expected_legs):
