@@ -141,9 +141,10 @@ class TestClassifyError:
         exc = Exception("no results found")
         assert classify_error(exc) is ApiFailureClassification.NO_INVENTORY
 
-    def test_no_inventory_empty(self):
+    def test_no_inventory_no_flights(self):
         assert (
-            classify_error(Exception("empty")) is ApiFailureClassification.NO_INVENTORY
+            classify_error(Exception("no flights"))
+            is ApiFailureClassification.NO_INVENTORY
         )
 
     def test_unknown_fallback(self):

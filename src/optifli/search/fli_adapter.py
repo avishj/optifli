@@ -70,7 +70,12 @@ def classify_error(exc: Exception) -> ApiFailureClassification:
     message = str(exc).lower()
     if any(fragment in message for fragment in _RATE_LIMIT_FRAGMENTS):
         return ApiFailureClassification.RATE_LIMITED
-    if "no results" in message or "no inventory" in message or "empty" in message:
+    if (
+        "no results found" in message
+        or "no inventory" in message
+        or "no flights" in message
+        or "no data" in message
+    ):
         return ApiFailureClassification.NO_INVENTORY
     return ApiFailureClassification.UNKNOWN
 
