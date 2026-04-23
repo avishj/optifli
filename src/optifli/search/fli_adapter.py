@@ -46,10 +46,10 @@ class LegOption:
 def normalize_leg(leg: FlightLeg) -> SegmentDetail:
     """Convert a single FLI ``FlightLeg`` into a ``SegmentDetail``."""
     return SegmentDetail(
-        airline=leg.airline.name,
+        airline=leg.airline.value,
         flight_number=leg.flight_number,
-        departure_airport=leg.departure_airport.name,
-        arrival_airport=leg.arrival_airport.name,
+        departure_airport=leg.departure_airport.value,
+        arrival_airport=leg.arrival_airport.value,
         departure_time=leg.departure_datetime,
         arrival_time=leg.arrival_datetime,
         duration_minutes=leg.duration,
