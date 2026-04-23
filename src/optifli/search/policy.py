@@ -160,14 +160,8 @@ def _run_fallback_phase(
     """Execute one-stop fallback search, returning the final searched window."""
     searched_window = leg.departure_window
     expansion_rounds_used = 0
-    fallback_leg = Leg(
-        origin=leg.origin,
-        destination=leg.destination,
-        departure_window=searched_window,
-        arrival_cutoff=leg.arrival_cutoff,
-    )
 
-    slices = build_local_query_slices(fallback_leg)
+    slices = build_local_query_slices(leg)
     _run_slices(slices, StopMode.ONE_STOP, adapter, acc, policy, used_requests)
 
     if not acc.has_results and policy.expand_on_fallback:
