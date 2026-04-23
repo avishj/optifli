@@ -12,6 +12,7 @@ from pydantic import (
     BaseModel,
     ConfigDict,
     NonNegativeInt,
+    PositiveInt,
     computed_field,
     model_validator,
 )
@@ -67,7 +68,7 @@ class SearchPolicy(BaseModel, frozen=True):
     max_expansion_rounds: NonNegativeInt = 0
     fallback: FallbackBehavior = FallbackBehavior.DISABLED
     expand_on_fallback: bool = False
-    max_requests: int | None = None
+    max_requests: PositiveInt | None = None
 
 
 class LegSearchTrace(BaseModel, frozen=True):
