@@ -141,16 +141,16 @@ def _run_nonstop_phase(
     )
 
 
-def _run_fallback_phase(  # noqa: PLR0913
+def _run_fallback_phase(
     leg: Leg,
     adapter: FliAdapter,
     acc: _SearchAccumulator,
     *,
-    searched_window: DepartureWindow,
     policy: SearchPolicy,
     used_requests: int,
 ) -> DepartureWindow:
     """Execute one-stop fallback search, returning the final searched window."""
+    searched_window = leg.departure_window
     fallback_leg = Leg(
         origin=leg.origin,
         destination=leg.destination,
@@ -214,7 +214,6 @@ def search_leg(
             leg,
             adapter,
             acc,
-            searched_window=nonstop.searched_window,
             policy=policy,
             used_requests=used_requests,
         )
