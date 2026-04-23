@@ -115,6 +115,15 @@ class LegSearchTrace(BaseModel, frozen=True):
         if self.fallback_expansion_rounds > 0 and not self.fallback_used:
             msg = "'fallback_expansion_rounds' requires 'fallback_used'=True"
             raise ValueError(msg)
+        if self.fallback_used and self.final_status not in (
+            SearchOutcome.RESULTS_FOUND,
+            SearchOutcome.NO_RESULTS_AFTER_FALLBACK,
+        ):
+            msg = (
+                "'fallback_used' requires final_status in "
+                "{RESULTS_FOUND, NO_RESULTS_AFTER_FALLBACK}"
+            )
+            raise ValueError(msg)
         if self.fallback_exhausted:
             if not self.fallback_used:
                 msg = "'fallback_exhausted' requires 'fallback_used'=True"
