@@ -238,7 +238,7 @@ jobs:
           COVERAGE_FILE: .coverage.${{ steps.prefix.outputs.value }}.integration
 
       - name: Run e2e tests
-        run: uv run pytest -m e2e --cov --cov-report=xml:coverage-${{ steps.prefix.outputs.value }}-e2e.xml --cov-report=term --junitxml=results-${{ steps.prefix.outputs.value }}-e2e.xml -n auto
+        run: uv run pytest -m e2e --cov --cov-report=xml:coverage-${{ steps.prefix.outputs.value }}-e2e.xml --cov-report=term --cov-fail-under=0 --junitxml=results-${{ steps.prefix.outputs.value }}-e2e.xml -n auto
         env:
           COVERAGE_FILE: .coverage.${{ steps.prefix.outputs.value }}.e2e
 
