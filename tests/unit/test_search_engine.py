@@ -285,6 +285,22 @@ class TestPartialResults:
         assert result.request_budget_exhausted is False
         assert len(result.legs) == 3
 
+    def test_exact_budget_completes(self):
+        hit = SearchResponse(options=(_option(),), failure=None)
+        # Leg 1 (DEL): 1 slice. Leg 2 (HAN +07:00): 2 slices.
+        # Leg 3 (BKK +07:00): 2 slices. Total = 5 queries exactly.
+        adapter = _adapter_returning(hit, hit, _EMPTY, hit, _EMPTY)
+
+        _all_opts, result = search_candidate(
+            self._three_leg_candidate(),
+            adapter,
+            policy=SearchPolicy(max_requests=5),
+        )
+
+        assert result.completed is True
+        assert result.request_budget_exhausted is False
+        assert len(result.legs) == 3
+
     def test_no_budget_searches_all(self):
         # Leg 1: 1 slice. Leg 2: 2 slices. Leg 3: 2 slices.
         adapter = _adapter_returning(_EMPTY, _EMPTY, _EMPTY, _EMPTY, _EMPTY)
