@@ -58,14 +58,6 @@ def search_candidate(
             LegSearchResult(leg=leg, trace=trace, api_failure=failure),
         )
 
-        if policy.max_requests is not None and requests_used >= policy.max_requests:
-            budget_exhausted = True
-            logger.warning(
-                "Request budget exhausted (%d/%d)",
-                requests_used,
-                policy.max_requests,
-            )
-
     completed = len(leg_results) == len(candidate.legs) and not budget_exhausted
     result = CandidateSearchResult(
         candidate=candidate,
