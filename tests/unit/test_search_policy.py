@@ -73,7 +73,6 @@ def _option(price: float = 200.0) -> LegOption:
             ),
         ),
         price=price,
-        currency="USD",
         total_duration_minutes=375,
         stops=0,
     )

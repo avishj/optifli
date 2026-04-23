@@ -76,7 +76,6 @@ def _option(
             ),
         ),
         price=price,
-        currency="USD",
         total_duration_minutes=375,
         stops=0,
     )

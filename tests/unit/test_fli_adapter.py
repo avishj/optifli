@@ -44,7 +44,6 @@ def _fli_leg(**overrides: object) -> FlightLeg:
 
 _RESULT_DEFAULTS: dict = {
     "price": 245.0,
-    "currency": "USD",
     "duration": 375,
     "stops": 0,
 }

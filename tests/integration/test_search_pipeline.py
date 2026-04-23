@@ -38,9 +38,8 @@ def _option() -> LegOption:
                 duration_minutes=360,
             ),
         ),
-        price=150.0,
-        currency="USD",
-        total_duration_minutes=360,
+        price=312.5,
+        total_duration_minutes=375,
         stops=0,
     )
 
