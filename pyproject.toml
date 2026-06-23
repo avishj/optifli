@@ -28,7 +28,7 @@ classifiers = [
 ]
 dependencies = [
     "cyclopts>=4.10.2",
-    "pydantic-settings>=2.14.0",
+    "pydantic-settings>=2.14.2",
     "rich>=15.0.0",
     "airportsdata>=20260315",
     "flights>=0.8.4",
